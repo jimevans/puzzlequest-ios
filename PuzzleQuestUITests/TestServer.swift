@@ -199,9 +199,11 @@ extension XCUIApplication {
 
 extension XCUIElement {
     /// Taps it once it can be tapped: a sheet going away can still cover it
-    /// for a moment.
+    /// for a moment, and on CI's slower simulators a screen can be in the
+    /// app's hierarchy for many seconds before it's drawn and can be tapped,
+    /// so this waits as long as the tests wait for a screen to appear.
     @MainActor
-    func tapWhenHittable(timeout: TimeInterval = 10) {
+    func tapWhenHittable(timeout: TimeInterval = 30) {
         let hittable = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "hittable == true"), object: self)
         XCTAssertEqual(
