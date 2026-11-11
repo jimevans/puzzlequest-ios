@@ -17,7 +17,8 @@ public final class SessionStore {
 
     public private(set) var state: State = .restoring
 
-    private let api: APIClient
+    /// The API, sending this session's token; screens make their calls with it.
+    public let api: APIClient
     private let tokens: any TokenStore
 
     public init(api: APIClient, tokens: any TokenStore) {
@@ -40,6 +41,26 @@ public final class SessionStore {
             state = .signedOut
         } catch {
             state = .restoreFailed
+        }
+    }
+
+    /// Asks the server again who is signed in, to pick up changes made
+    /// elsewhere, such as an email address verified on the website. If the
+    /// session has ended, it's forgotten; if the server can't be reached,
+    /// nothing changes.
+    public func refreshUser() async {
+        guard case .signedIn = state else { return }
+        do throws(APIError) {
+            let user = try await api.currentUser()
+            // Signed out while asking, or nothing has changed (setting the
+            // same value would still redraw every screen that reads it).
+            guard case .signedIn(let known) = state, known != user else { return }
+            state = .signedIn(user)
+        } catch .problem(let problem) where problem.status == 401 {
+            tokens.delete()
+            state = .signedOut
+        } catch {
+            // Keep what's known.
         }
     }
 

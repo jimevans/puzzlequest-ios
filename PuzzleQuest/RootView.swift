@@ -2,7 +2,8 @@ import PuzzleQuestKit
 import SwiftUI
 
 /// Shows sign-in or the signed-in app, once the session kept from before has
-/// been checked.
+/// been checked: a player's quests, or for staff and administrators, a note
+/// that their tools are on the website.
 struct RootView: View {
     @Environment(SessionStore.self) private var session
 
@@ -14,7 +15,12 @@ struct RootView: View {
             case .signedOut:
                 SignInView(session: session)
             case .signedIn(let user):
-                SignedInView(user: user)
+                switch user.homeScreen {
+                case .quests:
+                    HomeView(user: user, session: session)
+                case .website:
+                    WebsiteNoteView(user: user)
+                }
             case .restoreFailed:
                 RestoreFailedView()
             }

@@ -57,7 +57,8 @@ let aliceJSON = #"""
     {"id":"u1","userName":"alice","displayName":"Alice A.","email":"alice@example.com",
      "emailVerified":true,"phone":"","sms":false,"role":"player"}
     """#
-let alice = SignedInUser(userName: "alice", displayName: "Alice A.", role: .player)
+let alice = SignedInUser(
+    userName: "alice", displayName: "Alice A.", role: .player, emailVerified: true)
 
 func api(_ transport: FakeTransport, tokens: any TokenStore = InMemoryTokenStore()) -> APIClient {
     APIClient(

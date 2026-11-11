@@ -38,6 +38,10 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24
+          # npm's downloads for the test server, kept between runs: they
+          # change only when the app moves to another release of the API.
+          cache: npm
+          cache-dependency-path: api/VERSION
 
       # The description the client is generated from must be the pinned
       # release's, with scripts/tolerant-openapi.jq applied.

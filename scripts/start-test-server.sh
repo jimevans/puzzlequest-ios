@@ -2,12 +2,14 @@
 # Starts a real PuzzleQuest API server for the contract and UI tests: the
 # server repository at the release the app is pinned to (api/VERSION),
 # checked out into .test-server/, built with Node 24, and run on an
-# in-memory MongoDB with a test user. It runs in the background until
-# scripts/stop-test-server.sh.
+# in-memory MongoDB with a test player and administrator. It runs in the
+# background until scripts/stop-test-server.sh.
 #
 # When it's ready, .test-server/env holds what the tests need:
-# PQ_TEST_SERVER_URL, PQ_TEST_USER_NAME, PQ_TEST_PASSWORD and
-# PQ_TEST_DISPLAY_NAME, and each again prefixed with TEST_RUNNER_ for
+# PQ_TEST_SERVER_URL; PQ_TEST_USER_NAME, PQ_TEST_PASSWORD and
+# PQ_TEST_DISPLAY_NAME, a player's; and PQ_TEST_ADMIN_USER_NAME and
+# PQ_TEST_ADMIN_PASSWORD, an administrator's, through whom tests make and
+# start quests. Each is there again prefixed with TEST_RUNNER_ for
 # xcodebuild to pass on to the UI tests. Load them into the shell with
 # `set -a; source .test-server/env; set +a`.
 #
@@ -66,8 +68,22 @@ fi
 
 if [[ ! -f "$CHECKOUT/apps/api/dist/app.js" ]]; then
   echo "Installing and building the server with Node $node_version"
-  (cd "$CHECKOUT" && run24 npm ci --no-audit --no-fund --loglevel=error \
-    && run24 npm run build --workspace=@puzzlequest/api)
+  # The registry, or the network to it, fails now and then (as it has in
+  # CI): npm retries each download, and the whole install is tried three
+  # times before giving up.
+  for attempt in 1 2 3; do
+    if (cd "$CHECKOUT" && run24 npm ci --no-audit --no-fund --loglevel=error \
+      --fetch-retries=5 --fetch-retry-mintimeout=10000 \
+      --fetch-retry-maxtimeout=60000); then
+      break
+    elif [[ $attempt -eq 3 ]]; then
+      echo "Couldn't install the server's packages" >&2
+      exit 1
+    fi
+    echo "Installing failed (attempt $attempt of 3); trying again" >&2
+    sleep $((attempt * 15))
+  done
+  (cd "$CHECKOUT" && run24 npm run build --workspace=@puzzlequest/api)
 fi
 
 # Node itself, not a wrapper such as fnm's, so that stopping it stops the
