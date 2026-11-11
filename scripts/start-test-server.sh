@@ -68,8 +68,22 @@ fi
 
 if [[ ! -f "$CHECKOUT/apps/api/dist/app.js" ]]; then
   echo "Installing and building the server with Node $node_version"
-  (cd "$CHECKOUT" && run24 npm ci --no-audit --no-fund --loglevel=error \
-    && run24 npm run build --workspace=@puzzlequest/api)
+  # The registry, or the network to it, fails now and then (as it has in
+  # CI): npm retries each download, and the whole install is tried three
+  # times before giving up.
+  for attempt in 1 2 3; do
+    if (cd "$CHECKOUT" && run24 npm ci --no-audit --no-fund --loglevel=error \
+      --fetch-retries=5 --fetch-retry-mintimeout=10000 \
+      --fetch-retry-maxtimeout=60000); then
+      break
+    elif [[ $attempt -eq 3 ]]; then
+      echo "Couldn't install the server's packages" >&2
+      exit 1
+    fi
+    echo "Installing failed (attempt $attempt of 3); trying again" >&2
+    sleep $((attempt * 15))
+  done
+  (cd "$CHECKOUT" && run24 npm run build --workspace=@puzzlequest/api)
 fi
 
 # Node itself, not a wrapper such as fnm's, so that stopping it stops the
