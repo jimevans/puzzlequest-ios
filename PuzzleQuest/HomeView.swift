@@ -5,10 +5,12 @@ import SwiftUI
 /// a reminder to verify their email address until they have.
 struct HomeView: View {
     let user: SignedInUser
+    @Environment(ServerConnection.self) private var connection
     @Environment(SessionStore.self) private var session
     @Environment(\.scenePhase) private var scenePhase
     @State private var model: HomeModel
     @State private var isSigningOut = false
+    @State private var showingOptions = false
     /// Whether the app has been in the background since it was last active.
     @State private var wasInBackground = false
 
@@ -41,6 +43,9 @@ struct HomeView: View {
                 }
             }
             .refreshable { await refresh() }
+            .sheet(isPresented: $showingOptions) {
+                OptionsView(connection: connection)
+            }
             #if DEBUG
                 .overlay(alignment: .topLeading) { liveUpdatesMarker }
             #endif
@@ -145,6 +150,7 @@ struct HomeView: View {
                     Task { await session.signOut() }
                 }
             }
+            Button("Options", systemImage: "gearshape") { showingOptions = true }
         } label: {
             Label("Account", systemImage: "person.crop.circle")
         }
@@ -189,14 +195,14 @@ struct QuestPlaceholderView: View {
 }
 
 #Preview {
-    let tokens = InMemoryTokenStore()
-    let session = SessionStore(
-        api: APIClient(server: URL(string: "http://localhost:3000")!, tokens: tokens),
-        tokens: tokens)
+    let connection = ServerConnection(
+        setting: ServerSetting(defaults: UserDefaults(suiteName: "preview")!, policy: .anyAddress),
+        vault: InMemoryTokenVault(), policy: .anyAddress, fixed: .thisMac)
     HomeView(
         user: SignedInUser(
             userName: "alex", displayName: "Alex", role: .player, emailVerified: false),
-        session: session
+        session: connection.session
     )
-    .environment(session)
+    .environment(connection)
+    .environment(connection.session)
 }

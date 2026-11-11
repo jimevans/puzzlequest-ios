@@ -5,10 +5,12 @@ import SwiftUI
 /// are on the website.
 struct WebsiteNoteView: View {
     let user: SignedInUser
+    @Environment(ServerConnection.self) private var connection
     @Environment(SessionStore.self) private var session
     @State private var isSigningOut = false
+    @State private var showingOptions = false
 
-    private let website = ServerAddress.current
+    private var website: URL { connection.server.url }
 
     var body: some View {
         NavigationStack {
@@ -21,7 +23,7 @@ struct WebsiteNoteView: View {
                 .accessibilityIdentifier("website.note")
             } actions: {
                 Link(destination: website) {
-                    Text("Open \(website.host() ?? website.absoluteString)")
+                    Text("Open \(connection.server.displayName)")
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("website.open")
@@ -33,17 +35,26 @@ struct WebsiteNoteView: View {
                 .accessibilityIdentifier("website.sign-out")
             }
             .navigationTitle("PuzzleQuest")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Options", systemImage: "gearshape") { showingOptions = true }
+                        .accessibilityIdentifier("website.options")
+                }
+            }
+            .sheet(isPresented: $showingOptions) {
+                OptionsView(connection: connection)
+            }
         }
     }
 }
 
 #Preview {
-    let tokens = InMemoryTokenStore()
+    let connection = ServerConnection(
+        setting: ServerSetting(defaults: UserDefaults(suiteName: "preview")!, policy: .anyAddress),
+        vault: InMemoryTokenVault(), policy: .anyAddress, fixed: .thisMac)
     WebsiteNoteView(
         user: SignedInUser(userName: "helper", displayName: "Helper", role: .staff, emailVerified: true)
     )
-    .environment(
-        SessionStore(
-            api: APIClient(server: URL(string: "http://localhost:3000")!, tokens: tokens),
-            tokens: tokens))
+    .environment(connection)
+    .environment(connection.session)
 }

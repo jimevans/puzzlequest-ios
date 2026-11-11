@@ -10,6 +10,7 @@ import Synchronization
 final class FakeTransport: ClientTransport {
     struct Sent: Sendable {
         var operationID: String
+        var baseURL: URL
         var request: HTTPRequest
         var body: String?
     }
@@ -30,7 +31,7 @@ final class FakeTransport: ClientTransport {
     ) async throws -> (HTTPResponse, HTTPBody?) {
         let text: String? =
             if let body { try await String(collecting: body, upTo: 1024 * 1024) } else { nil }
-        sent.withLock { $0.append(Sent(operationID: operationID, request: request, body: text)) }
+        sent.withLock { $0.append(Sent(operationID: operationID, baseURL: baseURL, request: request, body: text)) }
         return try answer(operationID)
     }
 }

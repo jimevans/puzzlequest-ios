@@ -126,14 +126,29 @@ struct TestServer {
 }
 
 extension XCUIApplication {
-    /// The app, using the test server, starting signed out.
+    /// The app, using the test server for this run (PQ_SERVER_URL, whatever
+    /// Options says), starting signed out.
     @MainActor
     static func launchedSignedOut(_ server: TestServer) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment = [
-            "PQ_SERVER_URL": server.url.absoluteString, "PQ_SIGNED_OUT": "1",
+            "PQ_SERVER_URL": server.url.absoluteString,
+            // Signed out of every server, with Options as on a new install.
+            "PQ_SIGNED_OUT": "1", "PQ_RESET_SERVER": "1",
             // Shows the home screen's live-update state to the tests.
             "PQ_UI_TESTING": "1",
+        ]
+        app.launch()
+        return app
+    }
+
+    /// The app as a new install has it: signed out, using the server chosen
+    /// in Options, which is Production until a test chooses another.
+    @MainActor
+    static func launchedAsNew() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchEnvironment = [
+            "PQ_SIGNED_OUT": "1", "PQ_RESET_SERVER": "1", "PQ_UI_TESTING": "1",
         ]
         app.launch()
         return app

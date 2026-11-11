@@ -272,7 +272,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PQ_SERVER_URL = "http://localhost:3000";
 				PRODUCT_BUNDLE_IDENTIFIER = com.thepuzzlequest.PuzzleQuest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -288,7 +287,6 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "Config/Info-Release.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = PuzzleQuest;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -300,7 +298,6 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 0.1.0;
-				PQ_SERVER_URL = "https://thepuzzlequest.com";
 				PRODUCT_BUNDLE_IDENTIFIER = com.thepuzzlequest.PuzzleQuest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

@@ -1,8 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "A server's address can't include a user name or password." : {
+      "comment" : "Options: a custom server's address was refused because it has a user name or password in it."
+    },
+    "A server's address starts with https:// (or http:// for a test server)." : {
+      "comment" : "Options (debug builds): a custom server's address was refused because it isn't a web address."
+    },
     "Account" : {
-      "comment" : "The home screen's menu button, holding Sign out."
+      "comment" : "The home screen's menu button, holding Options and Sign out."
+    },
+    "Another PuzzleQuest server" : {
+      "comment" : "Options: describes the Custom server choice."
     },
     "Can't reach PuzzleQuest" : {
       "comment" : "Title shown when a kept session can't be checked with the server."
@@ -10,8 +19,17 @@
     "Can't reach PuzzleQuest. Check your internet connection, then try again." : {
       "comment" : "Error: the server couldn't be reached (signing in, or sending the verification email)."
     },
+    "Can't reach that server. Check the address and your internet connection, then try again." : {
+      "comment" : "Options: nothing answered at the custom server's address."
+    },
+    "Cancel" : {
+      "comment" : "Options: keeps the server in use instead of switching."
+    },
     "Check your internet connection, then try again." : {
       "comment" : "Shown when a kept session can't be checked with the server."
+    },
+    "Checking the server" : {
+      "comment" : "Options: VoiceOver label for the spinner shown while the app checks a custom server is PuzzleQuest's."
     },
     "Coming soon" : {
       "comment" : "Stands in for a quest's screen, which isn't built yet."
@@ -19,14 +37,32 @@
     "Couldn't load your quests. Check your connection and try again." : {
       "comment" : "Error on the home screen when the quests can't be fetched."
     },
+    "Custom" : {
+      "comment" : "Options: the choice of a server whose address the person types."
+    },
+    "Custom server" : {
+      "comment" : "Options: heading of the section where a custom server's address is typed."
+    },
+    "Done" : {
+      "comment" : "Options: closes the Options screen."
+    },
+    "Enter only the server's address, with nothing after its name, such as https://staging.thepuzzlequest.com." : {
+      "comment" : "Options: a custom server's address was refused because it has a path, query, or fragment."
+    },
     "Loading your quests…" : {
       "comment" : "Shown while the home screen fetches the player's quests."
     },
     "New to PuzzleQuest? Sign up on the website" : {
       "comment" : "Link on the sign-in screen that opens the website, where people sign up."
     },
+    "Now using %@" : {
+      "comment" : "VoiceOver announcement after switching servers; the argument is the server's name, such as staging.thepuzzlequest.com."
+    },
     "Open %@" : {
       "comment" : "Link to the website on the staff and administrators' screen; the argument is the site's address, such as thepuzzlequest.com."
+    },
+    "Options" : {
+      "comment" : "Button (sign-in screen, account menu, staff screen) that opens Options, and the Options screen's title."
     },
     "Password" : {
       "comment" : "Sign-in field."
@@ -37,17 +73,35 @@
     "Please verify your email address: follow the link in the email we sent you." : {
       "comment" : "Reminder on the home screen until the player verifies their email address."
     },
+    "Production" : {
+      "comment" : "Options: the choice of PuzzleQuest's own server, thepuzzlequest.com."
+    },
     "PuzzleQuest" : {
       "comment" : "Title of the screen staff and administrators see."
     },
     "PuzzleQuest couldn't accept that. Check your user name and password, then try again." : {
       "comment" : "Sign-in error: the server said the request wasn't valid."
     },
+    "PuzzleQuest's servers don't use a port number. Leave out the colon and the number after the name." : {
+      "comment" : "Options (release builds): a custom server's address was refused because it names a port."
+    },
+    "PuzzleQuest's servers use secure connections: the address must start with https://." : {
+      "comment" : "Options (release builds): a custom server's address was refused because it isn't https."
+    },
     "Send the email again" : {
       "comment" : "Button that sends the email-verification email again."
     },
     "Sent. Check your inbox." : {
       "comment" : "The verification email was sent again."
+    },
+    "Server" : {
+      "comment" : "Options: heading of the server choices."
+    },
+    "Server address" : {
+      "comment" : "Options: the field where a custom server's address is typed."
+    },
+    "Server in use" : {
+      "comment" : "Options: labels the name of the server the app uses now."
     },
     "Sign in" : {
       "comment" : "Title of the sign-in screen, and its button."
@@ -61,17 +115,47 @@
     "Signed in as %@. This app is for players; staff and administrators use PuzzleQuest on the website." : {
       "comment" : "The screen staff and administrators see; the argument is their display name."
     },
+    "Signing in to %@" : {
+      "comment" : "Sign-in screen, when the server isn't Production; the argument is the server's name, such as staging.thepuzzlequest.com."
+    },
     "Signing in…" : {
       "comment" : "Shown while a kept session is checked at launch."
     },
     "Something went wrong at PuzzleQuest. Try again in a moment." : {
       "comment" : "Error: anything unexpected, such as a fault on the server (signing in, or sending the verification email)."
     },
+    "Switch and sign out" : {
+      "comment" : "Options: confirms switching servers, which signs the person out."
+    },
+    "Switch servers?" : {
+      "comment" : "Options: title of the confirmation before switching servers while signed in."
+    },
+    "Switching to %@ signs you out of %@." : {
+      "comment" : "Options: the confirmation's message; the arguments are the new server's name, then the current one's."
+    },
+    "That isn't a PuzzleQuest server. Check the address, then try again." : {
+      "comment" : "Options: something answered at the custom server's address, but it isn't PuzzleQuest's API."
+    },
+    "That isn't a server's address. Enter one such as https://staging.thepuzzlequest.com." : {
+      "comment" : "Options: what was typed as a custom server isn't an address."
+    },
+    "That server runs a version of PuzzleQuest this app can't use." : {
+      "comment" : "Options: the custom server is PuzzleQuest's, but its API's version isn't 1."
+    },
     "That user name and password don't match an account. Check them and try again." : {
       "comment" : "Sign-in error: wrong user name or password."
     },
+    "The app checks it's a PuzzleQuest server before using it." : {
+      "comment" : "Options (debug builds): explains what happens to a custom server's address."
+    },
     "The email has been sent several times lately. Wait a few minutes, then try again." : {
       "comment" : "The verification email can't be sent again yet (rate limited)."
+    },
+    "This Mac" : {
+      "comment" : "Options (debug builds only): the choice of a server running on the developer's Mac, localhost:3000."
+    },
+    "This app connects only to PuzzleQuest's own servers: thepuzzlequest.com and addresses ending in .thepuzzlequest.com." : {
+      "comment" : "Options (release builds): explains which custom servers can be used, and why one was refused."
     },
     "Time: %@" : {
       "comment" : "Spoken by VoiceOver for a quest's time; the argument is a length of time such as \"1 hour, 4 minutes, 5 seconds\"."
@@ -81,6 +165,9 @@
     },
     "Try again" : {
       "comment" : "Button that tries again: checking a kept session with the server, or loading the player's quests."
+    },
+    "Use this server" : {
+      "comment" : "Options: button that checks and switches to the typed custom server."
     },
     "User name" : {
       "comment" : "Sign-in field."
