@@ -1,50 +1,101 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Account" : {
+      "comment" : "The home screen's menu button, holding Sign out."
+    },
     "Can't reach PuzzleQuest" : {
       "comment" : "Title shown when a kept session can't be checked with the server."
     },
     "Can't reach PuzzleQuest. Check your internet connection, then try again." : {
-      "comment" : "Sign-in error: the server couldn't be reached."
+      "comment" : "Error: the server couldn't be reached (signing in, or sending the verification email)."
     },
     "Check your internet connection, then try again." : {
       "comment" : "Shown when a kept session can't be checked with the server."
     },
+    "Coming soon" : {
+      "comment" : "Stands in for a quest's screen, which isn't built yet."
+    },
+    "Couldn't load your quests. Check your connection and try again." : {
+      "comment" : "Error on the home screen when the quests can't be fetched."
+    },
+    "Loading your quests…" : {
+      "comment" : "Shown while the home screen fetches the player's quests."
+    },
+    "New to PuzzleQuest? Sign up on the website" : {
+      "comment" : "Link on the sign-in screen that opens the website, where people sign up."
+    },
+    "Open %@" : {
+      "comment" : "Link to the website on the staff and administrators' screen; the argument is the site's address, such as thepuzzlequest.com."
+    },
     "Password" : {
       "comment" : "Sign-in field."
     },
+    "Paused" : {
+      "comment" : "Shown on a quest the puzzle master has paused, with a pause icon."
+    },
+    "Please verify your email address: follow the link in the email we sent you." : {
+      "comment" : "Reminder on the home screen until the player verifies their email address."
+    },
     "PuzzleQuest" : {
-      "comment" : "Title of the signed-in screen."
+      "comment" : "Title of the screen staff and administrators see."
     },
     "PuzzleQuest couldn't accept that. Check your user name and password, then try again." : {
       "comment" : "Sign-in error: the server said the request wasn't valid."
+    },
+    "Send the email again" : {
+      "comment" : "Button that sends the email-verification email again."
+    },
+    "Sent. Check your inbox." : {
+      "comment" : "The verification email was sent again."
     },
     "Sign in" : {
       "comment" : "Title of the sign-in screen, and its button."
     },
     "Sign out" : {
-      "comment" : "Button that ends the session."
+      "comment" : "Ends the session: in the home screen's account menu, and on the staff and administrators' screen."
     },
     "Signed in as %@" : {
-      "comment" : "The signed-in screen; the argument is the user's display name."
+      "comment" : "Heads the home screen's account menu; the argument is the user's display name."
+    },
+    "Signed in as %@. This app is for players; staff and administrators use PuzzleQuest on the website." : {
+      "comment" : "The screen staff and administrators see; the argument is their display name."
     },
     "Signing in…" : {
       "comment" : "Shown while a kept session is checked at launch."
     },
     "Something went wrong at PuzzleQuest. Try again in a moment." : {
-      "comment" : "Sign-in error: anything unexpected, such as a fault on the server."
+      "comment" : "Error: anything unexpected, such as a fault on the server (signing in, or sending the verification email)."
     },
     "That user name and password don't match an account. Check them and try again." : {
       "comment" : "Sign-in error: wrong user name or password."
+    },
+    "The email has been sent several times lately. Wait a few minutes, then try again." : {
+      "comment" : "The verification email can't be sent again yet (rate limited)."
+    },
+    "Time: %@" : {
+      "comment" : "Spoken by VoiceOver for a quest's time; the argument is a length of time such as \"1 hour, 4 minutes, 5 seconds\"."
     },
     "Too many attempts to sign in. Wait a few minutes, then try again." : {
       "comment" : "Sign-in error: rate limited after repeated failures."
     },
     "Try again" : {
-      "comment" : "Button that checks a kept session with the server again."
+      "comment" : "Button that tries again: checking a kept session with the server, or loading the player's quests."
     },
     "User name" : {
       "comment" : "Sign-in field."
+    },
+    "You have no quests yet." : {
+      "comment" : "Shown on the home screen when the player has no quests."
+    },
+    "Your quests" : {
+      "comment" : "Title of a player's home screen, which lists their quests."
+    },
+    "Your quests were updated" : {
+      "comment" : "Read out by VoiceOver when the list of quests changes by itself (a live update)."
+    },
+    "Your tools are on the website" : {
+      "comment" : "Title of the screen staff and administrators see: the app is for players."
     }
   },
   "version" : "1.0"

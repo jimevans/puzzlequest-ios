@@ -59,6 +59,13 @@ struct SignInView: View {
                     .disabled(!model.canSignIn)
                     .accessibilityIdentifier("sign-in.submit")
                 }
+                // Signing up is on the website until the app has it.
+                Section {
+                    Link(destination: ServerAddress.current) {
+                        Text("New to PuzzleQuest? Sign up on the website")
+                    }
+                    .accessibilityIdentifier("sign-in.sign-up")
+                }
             }
             .navigationTitle("Sign in")
         }

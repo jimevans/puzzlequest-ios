@@ -8,7 +8,11 @@ live in [therapypub-puzzlequest](https://github.com/jimevans/therapypub-puzzlequ
 Why there is a native app, and how it relates to that repository, is in its
 decision record `docs/decisions/0021-native-apps.md`.
 
-So far it signs in and out, and keeps its session between launches.
+So far it signs in and out, keeping its session between launches, and shows
+a player their quests, kept up to date live as they start and change, with a
+reminder to verify their email address. Staff and administrators, whose tools
+are on the website, are told so. Signing up and the rest of an account's
+pages are on the website for now; the sign-in screen links there.
 
 ## Requirements
 
@@ -68,8 +72,9 @@ versions than those pinned.
     `openapi.json` there. Nothing in it is written by hand.
   - `Sources/PuzzleQuestKit`: what the screens use: `APIClient` (the calls,
     returning the app's own types and throwing `APIError`), `SessionStore`
-    (who is signed in, kept in the Keychain), and view models such as
-    `SignInModel`.
+    (who is signed in, kept in the Keychain), `LiveUpdateFollower` (live
+    updates over the API's websocket, below), and view models such as
+    `SignInModel` and `HomeModel`.
   - `Tests/PuzzleQuestKitTests`: unit tests. `Tests/ContractTests`: tests
     against a real server.
 - `PuzzleQuestUITests/`: UI tests (XCUITest) of whole journeys in the app.
@@ -108,6 +113,22 @@ the unit tests in `ToleranceTests.swift` check the client reads such
 responses. Moving to a new release is a deliberate change: run the script,
 build, run every test, and commit `api/` with the regenerated copy.
 
+## Live updates
+
+A screen that shows something that changes while it's open follows it over
+the API's websocket, `/api/v1/updates`, with `LiveUpdateFollower`: it gets a
+new ticket for each connection (tickets can be used once), subscribes, and
+reports the connection and each update, ignoring messages this version
+doesn't know. When the connection drops, or a ping now and then goes
+unanswered, it connects again after a wait that doubles each time, up to 15
+seconds. Updates sent while disconnected are lost, so the screen fetches what
+it shows again each time the connection is made, as well as on each update
+and on coming back to the foreground. The follower runs for as long as the
+`.task` that runs it, so it stops when the screen goes away or the user signs
+out. The home screen follows the player's list of quests; the quest screen
+will follow a quest the same way (`LiveChannel.quest`), sending the
+connection's ID with its own actions.
+
 ## Tests
 
 ### Unit tests
@@ -118,14 +139,20 @@ cd PuzzleQuestKit && swift test --skip ContractTests
 
 These run on the Mac, with [Swift Testing](https://developer.apple.com/documentation/testing):
 reading newer responses, explaining errors, restoring and ending sessions
-against a fake network, and the Keychain. They also run in the simulator as
+against a fake network, the Keychain, following live updates over a fake
+websocket, fetching every page of a list, a quest's clock, the home screen's
+model and email reminder, and who sees which home screen. They also run in the simulator as
 part of `xcodebuild test` (below), except the Keychain test, which needs an
 app there.
 
 ### The test server
 
 The contract and UI tests run against a real server: the server repository
-at the release in `api/VERSION`, on an in-memory database, with a test user.
+at the release in `api/VERSION`, on an in-memory database, with a test player
+and an administrator. The administrator is made as a new site's first one
+is: signed up, then promoted with the server's own `promote` command. Tests
+sign up players of their own as they need them, and make and start quests for
+them as the administrator, through the API.
 
 ```sh
 scripts/start-test-server.sh    # clones, builds and starts it in the background
@@ -138,8 +165,9 @@ The first start clones the server into `.test-server/` (from
 `../therapypub-puzzlequest` if you have it, otherwise from GitHub; set
 `PQ_SERVER_REPOSITORY` to choose), installs its packages and builds it;
 later starts reuse that. It listens on port 3970 (`PQ_TEST_SERVER_PORT`).
-`.test-server/env` names the server and test user, and holds each again
-prefixed with `TEST_RUNNER_`, which `xcodebuild` passes on to the UI tests.
+`.test-server/env` names the server, the test player, and the
+administrator, and holds each again prefixed with `TEST_RUNNER_`, which
+`xcodebuild` passes on to the UI tests.
 The server's log is `.test-server/server.log`.
 
 ### Contract tests
@@ -151,8 +179,12 @@ cd PuzzleQuestKit && swift test --filter ContractTests
 ```
 
 They sign in, check the session, sign out, and check the problems the server
-sends for a wrong password, an invalid request, and too many attempts, all
-through the generated client. Without `PQ_TEST_SERVER_URL` they're skipped.
+sends for a wrong password, an invalid request, and too many attempts; fetch
+a new player's quests before and after a quest is made and started for them;
+get live tickets; follow the player's quests over the real websocket and hear
+of a quest starting; and send the verification email again until it's
+refused, all through the generated client. Without `PQ_TEST_SERVER_URL`
+they're skipped.
 
 ### UI tests, and everything in the simulator
 
@@ -166,10 +198,23 @@ xcodebuild test -project PuzzleQuest.xcodeproj -scheme PuzzleQuest \
 
 This runs the unit tests and the UI tests (XCUITest), which launch the app
 pointed at the test server, sign in, relaunch to check the session is kept,
-sign out, and check a wrong password is explained. Without the variables, the
+sign out through the account menu, and check a wrong password is explained,
+the link to sign up, and that an administrator is sent to the website. As a
+new player, they see an empty list, then a quest that the test starts through
+the API appear by itself (a live update), open it, and send the verification
+email again. Without the variables, the
 UI tests are skipped. The UI tests find controls by their accessibility
 identifiers (such as `sign-in.user-name`), so those stay put when wording
-changes.
+changes. Two things to know when adding identifiers: one on a container
+(a stack, say) is given to everything inside it, replacing theirs; and a
+menu's items don't keep theirs, so tests find those by label. After a new
+user signs in, iOS offers to save the password, covering the screen; the
+tests dismiss it (`dismissSavePassword()`). To prove a quest appears through a
+live update, a debug build launched with `PQ_UI_TESTING=1` (as the UI tests
+launch it) shows an invisible element, `home.live-updates`, whose value is
+`connected` once live updates are connected and the list has been fetched
+since; the test waits for it before starting the quest, so nothing but the
+live update can show it.
 
 In Xcode, run the tests with ⌘U; for the UI tests, add the `TEST_RUNNER_`
 variables' values, without the prefix, to the scheme's Test environment.

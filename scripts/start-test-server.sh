@@ -2,12 +2,14 @@
 # Starts a real PuzzleQuest API server for the contract and UI tests: the
 # server repository at the release the app is pinned to (api/VERSION),
 # checked out into .test-server/, built with Node 24, and run on an
-# in-memory MongoDB with a test user. It runs in the background until
-# scripts/stop-test-server.sh.
+# in-memory MongoDB with a test player and administrator. It runs in the
+# background until scripts/stop-test-server.sh.
 #
 # When it's ready, .test-server/env holds what the tests need:
-# PQ_TEST_SERVER_URL, PQ_TEST_USER_NAME, PQ_TEST_PASSWORD and
-# PQ_TEST_DISPLAY_NAME, and each again prefixed with TEST_RUNNER_ for
+# PQ_TEST_SERVER_URL; PQ_TEST_USER_NAME, PQ_TEST_PASSWORD and
+# PQ_TEST_DISPLAY_NAME, a player's; and PQ_TEST_ADMIN_USER_NAME and
+# PQ_TEST_ADMIN_PASSWORD, an administrator's, through whom tests make and
+# start quests. Each is there again prefixed with TEST_RUNNER_ for
 # xcodebuild to pass on to the UI tests. Load them into the shell with
 # `set -a; source .test-server/env; set +a`.
 #

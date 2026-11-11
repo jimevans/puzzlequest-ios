@@ -22,7 +22,11 @@ struct ToleranceTests {
                 """#)
         }
         let user = try await api(transport, tokens: InMemoryTokenStore(token: "t")).currentUser()
-        #expect(user == SignedInUser(userName: "alice", displayName: "Alice A.", role: .other("superuser")))
+        #expect(
+            user
+                == SignedInUser(
+                    userName: "alice", displayName: "Alice A.", role: .other("superuser"),
+                    emailVerified: true))
     }
 
     @Test("Each known role is read as itself")

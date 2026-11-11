@@ -10,6 +10,10 @@ public struct APIClient: Sendable {
     /// The generated client, for this package's own code and tests.
     package let client: Client
 
+    /// The live-update websocket's address: `/api/v1/updates` on the site,
+    /// over `wss:` (or `ws:` for a site on plain HTTP, such as a local one).
+    public let liveUpdatesURL: URL
+
     /// - Parameters:
     ///   - server: the site, such as https://thepuzzlequest.com; the API is
     ///     under its `/api/v1`.
@@ -19,6 +23,10 @@ public struct APIClient: Sendable {
     }
 
     package init(server: URL, tokens: any TokenStore, transport: any ClientTransport) {
+        var socket = URLComponents(
+            url: server.appending(path: "api/v1/updates"), resolvingAgainstBaseURL: false)!
+        socket.scheme = socket.scheme == "http" ? "ws" : "wss"
+        liveUpdatesURL = socket.url!
         client = Client(
             serverURL: server.appending(path: "api/v1"),
             configuration: Configuration(dateTranscoder: APIDateTranscoder()),
@@ -63,6 +71,43 @@ public struct APIClient: Sendable {
         }
     }
 
+    /// Every quest the user plays whose entry has started, fetching each page
+    /// of the list in turn.
+    public func userQuests(userName: String) async throws(APIError) -> [QuestSummary] {
+        try await allPages { (after) throws(APIError) in
+            let output = try await call {
+                try await client.listUserQuests(
+                    path: .init(userName: userName), query: .init(after: after))
+            }
+            guard case .ok(let ok) = output, case .json(let page) = ok.body else {
+                throw .unexpectedResponse("listUserQuests: \(output)")
+            }
+            return (page.items.map(QuestSummary.init), page.next)
+        }
+    }
+
+    /// A ticket for one connection to the live-update websocket to follow the
+    /// user's list of quests. Each can be used once.
+    public func userLiveTicket(userName: String) async throws(APIError) -> String {
+        let output = try await call {
+            try await client.createUserLiveTicket(path: .init(userName: userName))
+        }
+        guard case .created(let created) = output, case .json(let ticket) = created.body else {
+            throw .unexpectedResponse("createUserLiveTicket: \(output)")
+        }
+        return ticket.ticket
+    }
+
+    /// Sends the user another email with the link that verifies their address.
+    public func sendVerificationEmail(userName: String) async throws(APIError) {
+        let output = try await call {
+            try await client.sendVerificationEmail(path: .init(userName: userName))
+        }
+        guard case .noContent = output else {
+            throw .unexpectedResponse("sendVerificationEmail: \(output)")
+        }
+    }
+
     /// Runs a generated client's call, turning whatever it throws into an
     /// `APIError`. The client wraps errors from the transport and middleware
     /// in a `ClientError`; what matters is the error inside.
@@ -77,4 +122,22 @@ public struct APIClient: Sendable {
             throw APIError(error)
         }
     }
+}
+
+/// Gets everything in one of the API's paged lists: each page names the
+/// cursor (`next`) to send as `after` for the page that follows, and nil on
+/// the last.
+/// - Parameter fetchPage: fetches the page after a cursor, or the first page
+///   for nil, returning its items and the next cursor.
+func allPages<Item>(
+    _ fetchPage: (_ after: String?) async throws(APIError) -> (items: [Item], next: String?)
+) async throws(APIError) -> [Item] {
+    var items: [Item] = []
+    var after: String?
+    repeat {
+        let page = try await fetchPage(after)
+        items += page.items
+        after = page.next
+    } while after != nil
+    return items
 }

@@ -5,11 +5,35 @@ public struct SignedInUser: Equatable, Sendable {
     public var userName: String
     public var displayName: String
     public var role: Role
+    /// Whether they've followed the link in the email sent to their address.
+    public var emailVerified: Bool
 
-    public init(userName: String, displayName: String, role: Role) {
+    public init(userName: String, displayName: String, role: Role, emailVerified: Bool) {
         self.userName = userName
         self.displayName = displayName
         self.role = role
+        self.emailVerified = emailVerified
+    }
+
+    /// What the app shows them once signed in.
+    public var homeScreen: HomeScreen { HomeScreen(role) }
+}
+
+/// What the app shows someone once they're signed in. The app is for players;
+/// staff and administrators have their tools on the website.
+public enum HomeScreen: Equatable, Sendable {
+    /// Their quests.
+    case quests
+    /// A note that their tools are on the website.
+    case website
+
+    public init(_ role: Role) {
+        switch role {
+        case .player: self = .quests
+        // A role added later is more likely one with tools of its own (players
+        // are everyone's starting role), and the website is where those are.
+        case .staff, .admin, .other: self = .website
+        }
     }
 }
 
@@ -24,7 +48,9 @@ public enum Role: Equatable, Sendable {
 
 extension SignedInUser {
     init(_ user: Components.Schemas.User) {
-        self.init(userName: user.userName, displayName: user.displayName, role: Role(user.role))
+        self.init(
+            userName: user.userName, displayName: user.displayName, role: Role(user.role),
+            emailVerified: user.emailVerified)
     }
 }
 
