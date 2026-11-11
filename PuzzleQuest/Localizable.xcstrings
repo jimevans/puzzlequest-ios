@@ -1,0 +1,51 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Can't reach PuzzleQuest" : {
+      "comment" : "Title shown when a kept session can't be checked with the server."
+    },
+    "Can't reach PuzzleQuest. Check your internet connection, then try again." : {
+      "comment" : "Sign-in error: the server couldn't be reached."
+    },
+    "Check your internet connection, then try again." : {
+      "comment" : "Shown when a kept session can't be checked with the server."
+    },
+    "Password" : {
+      "comment" : "Sign-in field."
+    },
+    "PuzzleQuest" : {
+      "comment" : "Title of the signed-in screen."
+    },
+    "PuzzleQuest couldn't accept that. Check your user name and password, then try again." : {
+      "comment" : "Sign-in error: the server said the request wasn't valid."
+    },
+    "Sign in" : {
+      "comment" : "Title of the sign-in screen, and its button."
+    },
+    "Sign out" : {
+      "comment" : "Button that ends the session."
+    },
+    "Signed in as %@" : {
+      "comment" : "The signed-in screen; the argument is the user's display name."
+    },
+    "Signing in…" : {
+      "comment" : "Shown while a kept session is checked at launch."
+    },
+    "Something went wrong at PuzzleQuest. Try again in a moment." : {
+      "comment" : "Sign-in error: anything unexpected, such as a fault on the server."
+    },
+    "That user name and password don't match an account. Check them and try again." : {
+      "comment" : "Sign-in error: wrong user name or password."
+    },
+    "Too many attempts to sign in. Wait a few minutes, then try again." : {
+      "comment" : "Sign-in error: rate limited after repeated failures."
+    },
+    "Try again" : {
+      "comment" : "Button that checks a kept session with the server again."
+    },
+    "User name" : {
+      "comment" : "Sign-in field."
+    }
+  },
+  "version" : "1.0"
+}

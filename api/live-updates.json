@@ -1,0 +1,266 @@
+{
+  "LiveUpdate": {
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "connection"
+          },
+          "connectionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "connectionId"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "puzzleActivated"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          },
+          "puzzleName": {
+            "type": "string"
+          },
+          "activationTime": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId",
+          "puzzleName",
+          "activationTime"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "puzzleSolved"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          },
+          "puzzleName": {
+            "type": "string"
+          },
+          "solutionText": {
+            "type": "string"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          },
+          "questComplete": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId",
+          "puzzleName",
+          "solutionText",
+          "endTime",
+          "questComplete"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "puzzleStarted"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          },
+          "puzzleName": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId",
+          "puzzleName",
+          "displayName",
+          "startTime"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "hintRevealed"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          },
+          "puzzleName": {
+            "type": "string"
+          },
+          "hintText": {
+            "type": "string"
+          },
+          "timePenaltySeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "nextHint": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "timePenaltySeconds": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "solutionWarning": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "timePenaltySeconds",
+                  "solutionWarning"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId",
+          "puzzleName",
+          "hintText",
+          "timePenaltySeconds",
+          "nextHint"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "questUpdated"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "questsChanged"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    ],
+    "type": "object"
+  },
+  "LiveUpdateSubscription": {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "subscribe"
+          },
+          "questName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ticket": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "ticket"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "subscribe"
+          },
+          "userName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ticket": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "message",
+          "userName",
+          "ticket"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  }
+}

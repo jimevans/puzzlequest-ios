@@ -1,0 +1,7 @@
+# The client and its types, visible to this package (PuzzleQuestKit and its
+# tests) but not to the app, which goes through PuzzleQuestKit.
+generate:
+  - types
+  - client
+accessModifier: package
+namingStrategy: idiomatic
