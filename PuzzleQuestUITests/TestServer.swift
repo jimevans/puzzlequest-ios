@@ -297,17 +297,6 @@ extension XCUIApplication {
             "live updates didn't connect")
     }
 
-    /// Pulls a list down from one of its top rows, far and slowly enough to
-    /// refresh it: a quick swipe on a row only scrolls.
-    @MainActor
-    func pullToRefresh(from element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout: 30), "there's nothing to pull")
-        let start = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
-        start.press(
-            forDuration: 0.2, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 400)),
-            withVelocity: .slow, thenHoldForDuration: 0.5)
-    }
-
     /// Anything with that accessibility identifier.
     @MainActor
     func element(_ identifier: String) -> XCUIElement {

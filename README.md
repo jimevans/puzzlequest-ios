@@ -170,11 +170,10 @@ out. The home screen follows the player's list of quests
 (`LiveChannel.quest`) and fetches it again on any update about it, as the web
 app does, and so does the puzzle screen. The puzzle screen sends its
 connection's id with the player's own actions, so the server doesn't send it
-their updates: it fetches the puzzle again after each action itself. The server sends a quest's followers nothing when the quest is
-started or reset (its API description says so; only the home screen's
-channel hears of those), so a quest reset while open shows as no longer
-available at its next fetch: pulling to refresh, coming back to the
-foreground, or reconnecting.
+their updates: it fetches the puzzle again after each action itself. Starting
+and resetting a quest reach its followers too (since API 1.0.2), so a quest
+reset while its quest or puzzle screen is open shows as no longer available at
+once.
 
 ## Tests
 
@@ -272,14 +271,14 @@ email again. On the quest screen they see the current stop, and the quest
 paused and resumed as the administrator does it; finish a race (both players
 solving through the API while the screen is open) and see the finish, the
 final standings with the player's own entry marked, and the solved stop's
-solution; and pull to refresh after a reset to find the quest no longer
-available. On the puzzle screen they type a wrong code and then the right one
+solution; and see a reset make the quest no longer available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked
 before the hint that gives the solution away, answer wrongly and then rightly,
 and go on to the next stop; and see the quest paused and resumed, and the
 puzzle solved elsewhere, as by a teammate, through to the finish and back to
-the quest. Without `PQ_SERVER_URL`, they check Options starts with
+the quest; and see a reset make the puzzle, and the quest beneath it, no
+longer available as it happens. Without `PQ_SERVER_URL`, they check Options starts with
 Production, choose the test server as a custom one and sign in to it (the
 sign-in screen naming it), and switch back to Production from the account
 menu, which asks first and signs out. Without the variables, the
