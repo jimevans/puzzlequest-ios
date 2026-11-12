@@ -46,6 +46,12 @@ enum TestSite {
     /// Makes a quest of one stop for a player to play on their own, without
     /// starting it.
     static func makeQuest(for player: String, admin: APIClient) async throws -> String {
+        try await makeQuest(for: [player], admin: admin)
+    }
+
+    /// Makes a quest of one stop, each player playing it on their own (a race,
+    /// for more than one), without starting it.
+    static func makeQuest(for players: [String], admin: APIClient) async throws -> String {
         let puzzleName = unique("puzzle")
         let puzzle = try await admin.client.createPuzzle(
             body: .json(
@@ -60,12 +66,51 @@ enum TestSite {
             body: .json(
                 .init(
                     questName: questName, displayName: "Quest \(questName)",
-                    entrants: [.init(kind: .init(value1: .player), name: player)],
+                    entrants: players.map { .init(kind: .init(value1: .player), name: $0) },
                     puzzles: [.init(puzzleName: puzzleName)])))
         guard case .created = quest else {
             throw APIError.unexpectedResponse("createQuest: \(quest)")
         }
         return questName
+    }
+
+    /// As the player, finds the quest's current stop (with the code the
+    /// administrator sees) and solves it.
+    static func solveCurrentStop(
+        _ questName: String, player: APIClient, admin: APIClient
+    ) async throws {
+        let quest = try #require(try await player.playerQuest(questName: questName))
+        let stop = try #require(quest.entry.currentStop)
+        guard case .ok(let ok) = try await admin.client.getQuest(path: .init(questName: questName)),
+            case .json(let full) = ok.body
+        else {
+            throw APIError.unexpectedResponse("getQuest as the administrator")
+        }
+        let code = try #require(
+            full.entries.lazy.flatMap(\.puzzles).first { $0.puzzleName == stop.puzzleName }?
+                .activationCode)
+        let path = Operations.ActivatePuzzle.Input.Path(
+            questName: questName, puzzleName: stop.puzzleName)
+        guard
+            case .ok = try await player.client.activatePuzzle(
+                path: path, body: .json(.init(activationCode: code)))
+        else {
+            throw APIError.unexpectedResponse("activatePuzzle")
+        }
+        guard
+            case .ok = try await player.client.attemptSolution(
+                path: .init(questName: questName, puzzleName: stop.puzzleName),
+                body: .json(.init(guess: "piano")))
+        else {
+            throw APIError.unexpectedResponse("attemptSolution")
+        }
+    }
+
+    static func reset(_ questName: String, admin: APIClient) async throws {
+        let output = try await admin.client.resetQuest(path: .init(questName: questName))
+        guard case .ok = output else {
+            throw APIError.unexpectedResponse("resetQuest: \(output)")
+        }
     }
 
     static func start(_ questName: String, admin: APIClient) async throws {

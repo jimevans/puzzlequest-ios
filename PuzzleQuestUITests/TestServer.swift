@@ -100,6 +100,14 @@ struct TestServer {
     func makeQuest(for player: String, admin token: String) async throws -> (
         questName: String, displayName: String
     ) {
+        try await makeQuest(for: [player], admin: token)
+    }
+
+    /// As the administrator, makes a quest of one stop, each player playing it
+    /// on their own (a race, for more than one). It isn't started.
+    func makeQuest(for players: [String], admin token: String) async throws -> (
+        questName: String, displayName: String
+    ) {
         let puzzleName = Self.unique("puzzle")
         try await call(
             "POST", "puzzles", token: token,
@@ -113,10 +121,65 @@ struct TestServer {
             "POST", "quests", token: token,
             body: [
                 "questName": questName, "displayName": displayName,
-                "entrants": [["kind": "player", "name": player]],
+                "entrants": players.map { ["kind": "player", "name": $0] },
                 "puzzles": [["puzzleName": puzzleName]],
             ])
         return (questName, displayName)
+    }
+
+    /// Signs in as a player made by `newPlayer`.
+    func token(for player: String) async throws -> String {
+        let session = try await call(
+            "POST", "sessions",
+            body: ["userName": player, "password": password, "client": "native"])
+        guard let token = session["token"] as? String else {
+            throw Failure(description: "signing in as \(player) gave no token")
+        }
+        return token
+    }
+
+    /// As a player, activates their current stop (with the code the
+    /// administrator sees) and solves it, as if they had found and solved the
+    /// puzzle; the stops made by `makeQuest` are solved by "piano".
+    func solveCurrentStop(
+        _ questName: String, player token: String, admin: String
+    ) async throws {
+        let own = try await call("GET", "quests/\(questName)", token: token)
+        let entry = (own["entries"] as? [[String: Any]])?.first
+        guard
+            let stop = (entry?["puzzles"] as? [[String: Any]])?
+                .last(where: { $0["status"] as? String != "completed" }),
+            let puzzleName = stop["puzzleName"] as? String
+        else {
+            throw Failure(description: "the player has no stop to solve in \(questName)")
+        }
+        let full = try await call("GET", "quests/\(questName)", token: admin)
+        let code = (full["entries"] as? [[String: Any]] ?? [])
+            .flatMap { $0["puzzles"] as? [[String: Any]] ?? [] }
+            .first { $0["puzzleName"] as? String == puzzleName }?["activationCode"] as? String
+        guard let code else {
+            throw Failure(description: "the administrator can't see \(puzzleName)'s code")
+        }
+        try await call(
+            "POST", "quests/\(questName)/puzzles/\(puzzleName)/activation", token: token,
+            body: ["activationCode": code])
+        try await call(
+            "POST", "quests/\(questName)/puzzles/\(puzzleName)/solution-attempts", token: token,
+            body: ["guess": "piano"])
+    }
+
+    /// As the administrator, pauses, resumes, or resets a quest for all its
+    /// players.
+    func pause(_ questName: String, admin token: String) async throws {
+        try await call("POST", "quests/\(questName)/pause", token: token)
+    }
+
+    func resume(_ questName: String, admin token: String) async throws {
+        try await call("POST", "quests/\(questName)/resume", token: token)
+    }
+
+    func reset(_ questName: String, admin token: String) async throws {
+        try await call("POST", "quests/\(questName)/reset", token: token)
     }
 
     /// As the administrator, starts a quest for its players.
@@ -185,6 +248,30 @@ extension XCUIApplication {
         let signOut = buttons["Sign out"]
         XCTAssertTrue(signOut.waitForExistence(timeout: 10), "the account menu didn't open")
         signOut.tap()
+    }
+
+    /// Waits until a screen's live updates are connected (and it has fetched
+    /// since), so that a change made now can only reach it as an update.
+    @MainActor
+    func waitForLiveUpdates(_ identifier: String) {
+        let live = element(identifier)
+        XCTAssertTrue(live.waitForExistence(timeout: 30), "the live-update state isn't shown")
+        let connected = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "value == 'connected'"), object: live)
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [connected], timeout: 30), .completed,
+            "live updates didn't connect")
+    }
+
+    /// Pulls a list down from one of its top rows, far and slowly enough to
+    /// refresh it: a quick swipe on a row only scrolls.
+    @MainActor
+    func pullToRefresh(from element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout: 30), "there's nothing to pull")
+        let start = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+        start.press(
+            forDuration: 0.2, thenDragTo: start.withOffset(CGVector(dx: 0, dy: 400)),
+            withVelocity: .slow, thenHoldForDuration: 0.5)
     }
 
     /// Anything with that accessibility identifier.

@@ -1,6 +1,40 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ finished %@." : {
+      "comment" : "Spoken by VoiceOver when another team or player in the race finishes: their name, then their place, such as \"1st\".",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ finished %2$@."
+          }
+        }
+      }
+    },
+    "%@ is solved." : {
+      "comment" : "Spoken by VoiceOver when a stop's puzzle is solved: the puzzle's name."
+    },
+    "%@, including %@ in hint penalties" : {
+      "comment" : "Under the quest's total time: the entry's status, then the time added for hints, such as 2:00.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, including %2$@ in hint penalties"
+          }
+        }
+      }
+    },
+    "%@, paused" : {
+      "comment" : "In the race standings: an entry's status, when the puzzle master has paused it."
+    },
+    "A deleted player" : {
+      "comment" : "In the race standings, in place of a player whose account has been deleted."
+    },
+    "A deleted team" : {
+      "comment" : "In the race standings, in place of a team that has been deleted."
+    },
     "A server's address can't include a user name or password." : {
       "comment" : "Options: a custom server's address was refused because it has a user name or password in it."
     },
@@ -10,8 +44,14 @@
     "Account" : {
       "comment" : "The home screen's menu button, holding Options and Sign out."
     },
+    "Activated" : {
+      "comment" : "In a stop's times: when the players found the puzzle and started it."
+    },
     "Another PuzzleQuest server" : {
       "comment" : "Options: describes the Custom server choice."
+    },
+    "Back to your quests" : {
+      "comment" : "Button on a quest that's no longer available: returns to the list of quests."
     },
     "Can't reach PuzzleQuest" : {
       "comment" : "Title shown when a kept session can't be checked with the server."
@@ -25,14 +65,28 @@
     "Cancel" : {
       "comment" : "Options: keeps the server in use instead of switching."
     },
+    "Check your connection and try again." : {
+      "comment" : "Explains why a quest couldn't be loaded."
+    },
     "Check your internet connection, then try again." : {
       "comment" : "Shown when a kept session can't be checked with the server."
     },
     "Checking the server" : {
       "comment" : "Options: VoiceOver label for the spinner shown while the app checks a custom server is PuzzleQuest's."
     },
-    "Coming soon" : {
-      "comment" : "Stands in for a quest's screen, which isn't built yet."
+    "Congratulations! You finished %@ in %@." : {
+      "comment" : "When the player finishes a quest: the quest's name, then their total time.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Congratulations! You finished %1$@ in %2$@."
+          }
+        }
+      }
+    },
+    "Couldn't load this quest" : {
+      "comment" : "Heading when a quest couldn't be fetched."
     },
     "Couldn't load your quests. Check your connection and try again." : {
       "comment" : "Error on the home screen when the quests can't be fetched."
@@ -46,14 +100,44 @@
     "Done" : {
       "comment" : "Options: closes the Options screen."
     },
+    "End of the line" : {
+      "comment" : "Heading when the player has finished the quest (the quest's journey is over)."
+    },
+    "End of the line." : {
+      "comment" : "Spoken by VoiceOver when the player finishes the quest."
+    },
     "Enter only the server's address, with nothing after its name, such as https://staging.thepuzzlequest.com." : {
       "comment" : "Options: a custom server's address was refused because it has a path, query, or fragment."
+    },
+    "Final standings" : {
+      "comment" : "Heading of the race standings once every team has finished."
+    },
+    "Final standings: %@ won." : {
+      "comment" : "Spoken by VoiceOver once every team in the race has finished: the winners' names, joined with \"and\"."
+    },
+    "Finished" : {
+      "comment" : "In a stop's times: when it was solved."
+    },
+    "Hint penalties" : {
+      "comment" : "In a stop's times: the time added for the hints the players revealed."
+    },
+    "It's a race: the standings will show here once your team finishes." : {
+      "comment" : "Under the race standings while the player's team is still racing."
+    },
+    "Loading the quest…" : {
+      "comment" : "While a quest is being fetched."
     },
     "Loading your quests…" : {
       "comment" : "Shown while the home screen fetches the player's quests."
     },
     "New to PuzzleQuest? Sign up on the website" : {
       "comment" : "Link on the sign-in screen that opens the website, where people sign up."
+    },
+    "Not ranked yet" : {
+      "comment" : "Spoken by VoiceOver for a dash in the standings: an entry that hasn't finished, so has no place."
+    },
+    "Not started" : {
+      "comment" : "Spoken by VoiceOver for a dash in the standings: an entry that hasn't started, so has no time."
     },
     "Now using %@" : {
       "comment" : "VoiceOver announcement after switching servers; the argument is the server's name, such as staging.thepuzzlequest.com."
@@ -70,11 +154,20 @@
     "Paused" : {
       "comment" : "Shown on a quest the puzzle master has paused, with a pause icon."
     },
+    "Paused by the puzzle master. The clock is stopped until the quest resumes." : {
+      "comment" : "Banner on a quest the puzzle master has paused."
+    },
+    "Paused by the puzzle master. The clock is stopped." : {
+      "comment" : "Spoken by VoiceOver when the puzzle master pauses the quest."
+    },
     "Please verify your email address: follow the link in the email we sent you." : {
       "comment" : "Reminder on the home screen until the player verifies their email address."
     },
     "Production" : {
       "comment" : "Options: the choice of PuzzleQuest's own server, thepuzzlequest.com."
+    },
+    "Provisional until every team finishes: a team still playing could beat these times." : {
+      "comment" : "Under the race standings while some teams are still playing."
     },
     "PuzzleQuest" : {
       "comment" : "Title of the screen staff and administrators see."
@@ -87,6 +180,9 @@
     },
     "PuzzleQuest's servers use secure connections: the address must start with https://." : {
       "comment" : "Options (release builds): a custom server's address was refused because it isn't https."
+    },
+    "Quest not available" : {
+      "comment" : "Heading when the player can no longer see a quest, as after the puzzle master resets it."
     },
     "Send the email again" : {
       "comment" : "Button that sends the email-verification email again."
@@ -121,8 +217,40 @@
     "Signing in…" : {
       "comment" : "Shown while a kept session is checked at launch."
     },
+    "Skipped" : {
+      "comment" : "Spoken by VoiceOver for the icon of a stop the puzzle master skipped."
+    },
+    "Solution" : {
+      "comment" : "Heading of a solved stop's answer."
+    },
+    "Solved" : {
+      "comment" : "Heading of the list of stops already solved; also spoken by VoiceOver for a solved stop's check mark."
+    },
     "Something went wrong at PuzzleQuest. Try again in a moment." : {
       "comment" : "Error: anything unexpected, such as a fault on the server (signing in, or sending the verification email)."
+    },
+    "Standings" : {
+      "comment" : "Heading of the race standings while some teams are still playing."
+    },
+    "Started" : {
+      "comment" : "In a stop's times: when the players reached it."
+    },
+    "Stop %lld" : {
+      "comment" : "A stop on a quest, by number, such as \"Stop 3\". Never says how many stops there are."
+    },
+    "Stop %lld reached: %@." : {
+      "comment" : "Spoken by VoiceOver when the players reach a new stop: its number, then the puzzle's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop %1$lld reached: %2$@."
+          }
+        }
+      }
+    },
+    "Stop not available" : {
+      "comment" : "When a stop's details are open but the stop has gone, as after the quest is reset."
     },
     "Switch and sign out" : {
       "comment" : "Options: confirms switching servers, which signs the person out."
@@ -151,17 +279,38 @@
     "The email has been sent several times lately. Wait a few minutes, then try again." : {
       "comment" : "The verification email can't be sent again yet (rate limited)."
     },
+    "The puzzle master may have reset it, or it may no longer be yours to play." : {
+      "comment" : "Explains why a quest is no longer available."
+    },
+    "The quest has resumed." : {
+      "comment" : "Spoken by VoiceOver when the puzzle master resumes a paused quest."
+    },
     "This Mac" : {
       "comment" : "Options (debug builds only): the choice of a server running on the developer's Mac, localhost:3000."
     },
     "This app connects only to PuzzleQuest's own servers: thepuzzlequest.com and addresses ending in .thepuzzlequest.com." : {
       "comment" : "Options (release builds): explains which custom servers can be used, and why one was refused."
     },
+    "This quest is no longer available." : {
+      "comment" : "Spoken by VoiceOver when the quest on screen stops being available, as after a reset."
+    },
+    "Time" : {
+      "comment" : "In a stop's times: the time spent on it, without hint penalties."
+    },
     "Time: %@" : {
       "comment" : "Spoken by VoiceOver for a quest's time; the argument is a length of time such as \"1 hour, 4 minutes, 5 seconds\"."
     },
+    "Times" : {
+      "comment" : "Heading of a stop's times."
+    },
     "Too many attempts to sign in. Wait a few minutes, then try again." : {
       "comment" : "Sign-in error: rate limited after repeated failures."
+    },
+    "Total" : {
+      "comment" : "In a stop's times: the time spent on it plus hint penalties."
+    },
+    "Total time" : {
+      "comment" : "Above the quest's clock: the time spent plus hint penalties, the player's score."
     },
     "Try again" : {
       "comment" : "Button that tries again: checking a kept session with the server, or loading the player's quests."
@@ -172,6 +321,12 @@
     "User name" : {
       "comment" : "Sign-in field."
     },
+    "Winner" : {
+      "comment" : "Badge in the final standings on the team or player who won."
+    },
+    "You" : {
+      "comment" : "Badge in the race standings on the player's own entry, when they play alone."
+    },
     "You have no quests yet." : {
       "comment" : "Shown on the home screen when the player has no quests."
     },
@@ -180,6 +335,9 @@
     },
     "Your quests were updated" : {
       "comment" : "Read out by VoiceOver when the list of quests changes by itself (a live update)."
+    },
+    "Your team" : {
+      "comment" : "Badge in the race standings on the player's own team."
     },
     "Your tools are on the website" : {
       "comment" : "Title of the screen staff and administrators see: the app is for players."
