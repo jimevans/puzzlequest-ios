@@ -158,11 +158,8 @@ extension XCUIApplication {
     func signIn(userName: String, password: String) {
         let userNameField = textFields["sign-in.user-name"]
         XCTAssertTrue(userNameField.waitForExistence(timeout: 30), "the sign-in screen didn't show")
-        userNameField.tap()
-        userNameField.typeText(userName)
-        let passwordField = secureTextFields["sign-in.password"]
-        passwordField.tap()
-        passwordField.typeText(password)
+        userNameField.typeWhenFocused(userName)
+        secureTextFields["sign-in.password"].typeWhenFocused(password)
         buttons["sign-in.submit"].tap()
     }
 
@@ -210,5 +207,21 @@ extension XCUIElement {
             XCTWaiter.wait(for: [hittable], timeout: timeout), .completed,
             "\(self) couldn't be tapped")
         tap()
+    }
+
+    /// Types into it once it has the keyboard. On CI's slower simulators a
+    /// field can take a tap before it's ready to take focus, and typing then
+    /// has nowhere to go, so this taps until it has focus.
+    @MainActor
+    func typeWhenFocused(_ text: String) {
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        for _ in 1...3 {
+            tapWhenHittable()
+            let hasFocus = XCTNSPredicateExpectation(predicate: focused, object: self)
+            if XCTWaiter.wait(for: [hasFocus], timeout: 10) == .completed { break }
+        }
+        XCTAssertTrue(
+            focused.evaluate(with: self), "\(self) didn't take the keyboard")
+        typeText(text)
     }
 }

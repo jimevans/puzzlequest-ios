@@ -103,8 +103,7 @@ final class OptionsUITests: XCTestCase {
         custom.tap()
         let address = app.textFields["options.custom-address"]
         XCTAssertTrue(address.waitForExistence(timeout: 10), "there's nowhere to type an address")
-        address.tapWhenHittable()
-        address.typeText(server.url.absoluteString)
+        address.typeWhenFocused(server.url.absoluteString)
         app.buttons["options.use-custom"].tap()
         // Switching rebuilds the screens for the new server, closing Options.
         XCTAssertTrue(
