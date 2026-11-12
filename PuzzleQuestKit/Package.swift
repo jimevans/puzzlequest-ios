@@ -14,14 +14,16 @@ let package = Package(
         .library(name: "PuzzleQuestKit", targets: ["PuzzleQuestKit"])
     ],
     dependencies: [
-        // Apple's OpenAPI tools, the only dependencies. Each is pinned to an
-        // exact release at least two weeks old when chosen. swift-http-types
-        // comes with the runtime anyway; it's named here because the
-        // middleware in PuzzleQuestKit uses its request and response types.
+        // Apple's packages, the only dependencies, each pinned to an exact
+        // release at least two weeks old when chosen. The OpenAPI tools make
+        // the client; swift-http-types comes with the runtime anyway, and is
+        // named here because the middleware in PuzzleQuestKit uses its request
+        // and response types. swift-markdown reads text puzzles' Markdown.
         .package(url: "https://github.com/apple/swift-openapi-generator", exact: "1.14.3"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", exact: "1.13.3"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", exact: "1.4.0"),
         .package(url: "https://github.com/apple/swift-http-types", exact: "1.8.0"),
+        .package(url: "https://github.com/swiftlang/swift-markdown", exact: "0.9.0"),
     ],
     targets: [
         // The client generated at build time from openapi.json, which
@@ -42,6 +44,7 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
+                .product(name: "Markdown", package: "swift-markdown"),
             ]
         ),
         .testTarget(

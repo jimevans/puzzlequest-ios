@@ -8,6 +8,7 @@ import SwiftUI
 /// updates, and tells VoiceOver users what changes, but not the clocks.
 struct QuestView: View {
     let route: QuestRoute
+    private let api: APIClient
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
     @State private var model: QuestModel
@@ -15,6 +16,7 @@ struct QuestView: View {
 
     init(route: QuestRoute, api: APIClient) {
         self.route = route
+        self.api = api
         _model = State(initialValue: QuestModel(questName: route.questName, api: api))
     }
 
@@ -24,6 +26,9 @@ struct QuestView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: StopRoute.self) { route in
                 StopDetailView(model: model, puzzleName: route.puzzleName)
+            }
+            .navigationDestination(for: PuzzleRoute.self) { puzzle in
+                PuzzleView(questName: route.questName, route: puzzle, api: api)
             }
             #if DEBUG
                 .overlay(alignment: .topLeading) { liveUpdatesMarker }
@@ -158,7 +163,13 @@ struct QuestProgressList: View {
             }
             if let stop = quest.entry.currentStop {
                 Section {
-                    CurrentStopCard(stop: stop)
+                    NavigationLink(
+                        value: PuzzleRoute(puzzleName: stop.puzzleName, displayName: stop.displayName)
+                    ) {
+                        CurrentStopCard(stop: stop)
+                    }
+                    .accessibilityHint(Text("Opens the puzzle"))
+                    .accessibilityIdentifier("quest.current-stop")
                 }
             }
             if quest.entry.isFinished {
@@ -221,7 +232,7 @@ struct QuestProgressList: View {
 }
 
 /// The stop being played, large: its number, name, where it stands, and its
-/// time.
+/// time. Tapping it opens its puzzle.
 struct CurrentStopCard: View {
     let stop: Stop
 
@@ -242,7 +253,6 @@ struct CurrentStopCard: View {
         }
         .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("quest.current-stop")
     }
 }
 

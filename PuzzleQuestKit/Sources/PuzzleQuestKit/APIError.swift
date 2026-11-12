@@ -37,6 +37,12 @@ extension Problem {
         public static let signInFailed = "/problems/sign-in-failed"
         public static let tooManyRequests = "/problems/too-many-requests"
         public static let unexpected = "/problems/unexpected"
+        public static let wrongState = "/problems/wrong-state"
+        public static let questPaused = "/problems/quest-paused"
+        public static let tryAgain = "/problems/try-again"
+        public static let wrongActivationCode = "/problems/wrong-activation-code"
+        public static let wrongAnswer = "/problems/wrong-answer"
+        public static let noMoreHints = "/problems/no-more-hints"
     }
 }
 

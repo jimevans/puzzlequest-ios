@@ -95,26 +95,39 @@ struct TestServer {
         return token
     }
 
-    /// As the administrator, makes a quest of one stop for a player to play on
-    /// their own, and returns its name and display name. It isn't started.
-    func makeQuest(for player: String, admin token: String) async throws -> (
+    /// As the administrator, makes a quest for a player to play on their own,
+    /// and returns its name and display name. It isn't started.
+    func makeQuest(for player: String, stops: Int = 1, admin token: String) async throws -> (
         questName: String, displayName: String
     ) {
-        try await makeQuest(for: [player], admin: token)
+        try await makeQuest(for: [player], stops: stops, admin: token)
     }
 
-    /// As the administrator, makes a quest of one stop, each player playing it
-    /// on their own (a race, for more than one). It isn't started.
-    func makeQuest(for players: [String], admin token: String) async throws -> (
+    /// As the administrator, makes a quest, each player playing it on their
+    /// own (a race, for more than one). It isn't started. Its first stop is
+    /// "A puzzle", the others "Another puzzle"; each asks "What has keys?",
+    /// is solved by "piano", and has two hints, the first adding a minute,
+    /// the second giving the solution away.
+    func makeQuest(for players: [String], stops: Int = 1, admin token: String) async throws -> (
         questName: String, displayName: String
     ) {
-        let puzzleName = Self.unique("puzzle")
-        try await call(
-            "POST", "puzzles", token: token,
-            body: [
-                "puzzleName": puzzleName, "displayName": "A puzzle", "text": "What has keys?",
-                "solutionKeyword": "piano", "solutionText": "A piano",
-            ])
+        var puzzleNames: [String] = []
+        for stop in 1...stops {
+            let puzzleName = Self.unique("puzzle")
+            try await call(
+                "POST", "puzzles", token: token,
+                body: [
+                    "puzzleName": puzzleName,
+                    "displayName": stop == 1 ? "A puzzle" : "Another puzzle",
+                    "text": "What has *keys*?",
+                    "solutionKeyword": "piano", "solutionText": "A piano",
+                    "hints": [
+                        ["text": "It makes music", "timePenaltySeconds": 60],
+                        ["text": "A piano", "timePenaltySeconds": 300, "solutionWarning": true],
+                    ],
+                ])
+            puzzleNames.append(puzzleName)
+        }
         let questName = Self.unique("quest")
         let displayName = "Quest \(questName)"
         try await call(
@@ -122,7 +135,7 @@ struct TestServer {
             body: [
                 "questName": questName, "displayName": displayName,
                 "entrants": players.map { ["kind": "player", "name": $0] },
-                "puzzles": [["puzzleName": puzzleName]],
+                "puzzles": puzzleNames.map { ["puzzleName": $0] },
             ])
         return (questName, displayName)
     }
@@ -138,12 +151,8 @@ struct TestServer {
         return token
     }
 
-    /// As a player, activates their current stop (with the code the
-    /// administrator sees) and solves it, as if they had found and solved the
-    /// puzzle; the stops made by `makeQuest` are solved by "piano".
-    func solveCurrentStop(
-        _ questName: String, player token: String, admin: String
-    ) async throws {
+    /// The player's current stop: reached, and not yet solved.
+    func currentStop(_ questName: String, player token: String) async throws -> String {
         let own = try await call("GET", "quests/\(questName)", token: token)
         let entry = (own["entries"] as? [[String: Any]])?.first
         guard
@@ -153,6 +162,13 @@ struct TestServer {
         else {
             throw Failure(description: "the player has no stop to solve in \(questName)")
         }
+        return puzzleName
+    }
+
+    /// A puzzle's activation code, as the administrator sees it.
+    func activationCode(
+        _ questName: String, puzzleName: String, admin: String
+    ) async throws -> String {
         let full = try await call("GET", "quests/\(questName)", token: admin)
         let code = (full["entries"] as? [[String: Any]] ?? [])
             .flatMap { $0["puzzles"] as? [[String: Any]] ?? [] }
@@ -160,12 +176,30 @@ struct TestServer {
         guard let code else {
             throw Failure(description: "the administrator can't see \(puzzleName)'s code")
         }
-        try await call(
-            "POST", "quests/\(questName)/puzzles/\(puzzleName)/activation", token: token,
-            body: ["activationCode": code])
+        return code
+    }
+
+    /// As a player, activates their current stop (with the code the
+    /// administrator sees) and solves it, as if they had found and solved the
+    /// puzzle; the stops made by `makeQuest` are solved by "piano".
+    func solveCurrentStop(
+        _ questName: String, player token: String, admin: String
+    ) async throws {
+        let puzzleName = try await currentStop(questName, player: token)
+        try await activate(questName, puzzleName: puzzleName, player: token, admin: admin)
         try await call(
             "POST", "quests/\(questName)/puzzles/\(puzzleName)/solution-attempts", token: token,
             body: ["guess": "piano"])
+    }
+
+    /// As a player, activates a stop they've reached, with its code.
+    func activate(
+        _ questName: String, puzzleName: String, player token: String, admin: String
+    ) async throws {
+        let code = try await activationCode(questName, puzzleName: puzzleName, admin: admin)
+        try await call(
+            "POST", "quests/\(questName)/puzzles/\(puzzleName)/activation", token: token,
+            body: ["activationCode": code])
     }
 
     /// As the administrator, pauses, resumes, or resets a quest for all its
