@@ -96,7 +96,7 @@ final class QuestUITests: XCTestCase {
     }
 
     @MainActor
-    func testAQuestResetWhileOpenIsNoLongerAvailableOnRefreshing() async throws {
+    func testAQuestResetWhileOpenIsNoLongerAvailableAsItHappens() async throws {
         let player = try await server.newPlayer()
         let admin = try await server.adminToken()
         let quest = try await server.makeQuest(for: player, admin: admin)
@@ -104,9 +104,6 @@ final class QuestUITests: XCTestCase {
 
         let app = openQuest(quest.questName, as: player)
         try await server.reset(quest.questName, admin: admin)
-        // Resetting sends the quest's followers no update (the API's
-        // description says so), so the player sees it on refreshing.
-        app.pullToRefresh(from: app.element("quest.summary"))
         XCTAssertTrue(
             app.element("quest.not-available").waitForExistence(timeout: 15),
             "the reset didn't show")

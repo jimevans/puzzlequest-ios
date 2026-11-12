@@ -105,6 +105,25 @@ final class PuzzleUITests: XCTestCase {
     }
 
     @MainActor
+    func testAQuestResetWhileAPuzzleIsOpenIsNoLongerAvailableAsItHappens() async throws {
+        let player = try await server.newPlayer()
+        let admin = try await server.adminToken()
+        let quest = try await server.makeQuest(for: player, admin: admin)
+        try await server.start(quest.questName, admin: admin)
+
+        let app = openCurrentStop(quest.questName, as: player)
+        try await server.reset(quest.questName, admin: admin)
+        XCTAssertTrue(
+            app.element("puzzle.not-available").waitForExistence(timeout: 15),
+            "the reset didn't show")
+        // The quest screen beneath heard of it too.
+        app.buttons["Back to the quest"].tapWhenHittable()
+        XCTAssertTrue(
+            app.element("quest.not-available").waitForExistence(timeout: 15),
+            "the quest screen didn't show the reset")
+    }
+
+    @MainActor
     func testPausingAndSolvingElsewhereShowAsTheyHappenThroughToTheFinish() async throws {
         let player = try await server.newPlayer()
         let admin = try await server.adminToken()
