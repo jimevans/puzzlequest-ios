@@ -10,7 +10,11 @@ decision record `docs/decisions/0021-native-apps.md`.
 
 So far it signs in and out, keeping its session between launches, and shows
 a player their quests, kept up to date live as they start and change, with a
-reminder to verify their email address. Staff and administrators, whose tools
+reminder to verify their email address. A quest opens to the stop being
+played, the stops solved, and the finish and a race's standings; the stop
+being played opens to its puzzle, where the player activates it (scanning its
+QR code, or typing its code), reads it, reveals hints, and answers, then goes
+on to the next stop. Staff and administrators, whose tools
 are on the website, are told so. Signing up and the rest of an account's
 pages are on the website for now; the sign-in screen links there. Options,
 from the sign-in screen or the account menu, chooses which PuzzleQuest server
@@ -27,12 +31,15 @@ the app uses (below).
 - **jq** and the **GitHub CLI** (`gh`), only for moving to a new API release.
   macOS includes jq.
 
-The app's only dependencies are Apple's OpenAPI packages
+The app's only dependencies are Apple's: its OpenAPI packages
 ([swift-openapi-generator](https://github.com/apple/swift-openapi-generator),
 [-runtime](https://github.com/apple/swift-openapi-runtime),
 [-urlsession](https://github.com/apple/swift-openapi-urlsession), and
 [swift-http-types](https://github.com/apple/swift-http-types), which comes
-with them), pinned to exact versions in `PuzzleQuestKit/Package.swift`. Every
+with them), and [swift-markdown](https://github.com/swiftlang/swift-markdown)
+(with the [swift-cmark](https://github.com/swiftlang/swift-cmark) it brings
+in), which reads text puzzles' Markdown for the app's own views to draw;
+SwiftUI on its own draws only Markdown within a line. They're pinned to exact versions in `PuzzleQuestKit/Package.swift`. Every
 version, including those they bring in, is recorded in `Package.resolved`
 (`PuzzleQuestKit/` for `swift`, and in the Xcode project's workspace for
 Xcode); keep the two the same.
@@ -104,8 +111,10 @@ server's origin could be accepted alongside the allowlist (see
     returning the app's own types and throwing `APIError`), `SessionStore`
     (who is signed in, kept in the Keychain), `ServerConnection` (the chosen
     server and its session), `LiveUpdateFollower` (live
-    updates over the API's websocket, below), and view models such as
-    `SignInModel`, `HomeModel` and `OptionsModel`.
+    updates over the API's websocket, below), `MarkdownBlock` (a text
+    puzzle's Markdown, read into blocks for `MarkdownView` to draw; HTML in
+    it shows as plain text, as on the web), and view models such as
+    `SignInModel`, `HomeModel`, `QuestModel` and `PuzzleModel`.
   - `Tests/PuzzleQuestKitTests`: unit tests. `Tests/ContractTests`: tests
     against a real server.
 - `PuzzleQuestUITests/`: UI tests (XCUITest) of whole journeys in the app.
@@ -159,7 +168,9 @@ and on coming back to the foreground. The follower runs for as long as the
 out. The home screen follows the player's list of quests
 (`LiveChannel.userQuests`); the quest screen follows its quest
 (`LiveChannel.quest`) and fetches it again on any update about it, as the web
-app does. The server sends a quest's followers nothing when the quest is
+app does, and so does the puzzle screen. The puzzle screen sends its
+connection's id with the player's own actions, so the server doesn't send it
+their updates: it fetches the puzzle again after each action itself. The server sends a quest's followers nothing when the quest is
 started or reset (its API description says so; only the home screen's
 channel hears of those), so a quest reset while open shows as no longer
 available at its next fetch: pulling to refresh, coming back to the
@@ -178,7 +189,12 @@ reading newer responses, explaining errors, restoring and ending sessions
 against a fake network, the Keychain, following live updates over a fake
 websocket, fetching every page of a list, a quest's clock, the home screen's
 model and email reminder, reading a player's quest and a race's standings,
-what's announced as a quest changes, the quest screen's model, who sees
+what's announced as a quest changes, the quest screen's model, reading a
+puzzle (its media on the site) and what's announced as it changes, telling
+refusals apart by their problem types, the puzzle screen's model (activating,
+a code left in front of the camera sent only once, guessing, hints, the
+live-update connection named with actions, and going on to the next stop),
+reading Markdown (and HTML in it as plain text), who sees
 which home screen, which server addresses
 each build allows, checking a server is PuzzleQuest's, keeping each server's
 token apart, and switching servers. They also run in the simulator as
@@ -226,7 +242,12 @@ of a quest starting; fetch a quest as its player before and after it starts,
 solve its stop (finding the activation code as the administrator) and see it
 finished with its solution, see a two-player race's standings provisional and
 then final, find a reset quest no longer available, and hear of the player's
-own progress over the quest's websocket; send the verification email again
+own progress over the quest's websocket; see a puzzle waiting to be found
+show nothing of itself, have a wrong code refused and the right one accepted
+in any letter case, reveal a hint and see its penalty and the next one's
+warning, have a wrong guess refused and the right one solve it, with the next
+stop reached, have actions refused while the quest is paused, and find a stop
+not reached or reset not available; send the verification email again
 until it's refused, all through the generated client; and check that the check before
 switching servers accepts a real server. Without `PQ_TEST_SERVER_URL`
 they're skipped.
@@ -252,7 +273,13 @@ paused and resumed as the administrator does it; finish a race (both players
 solving through the API while the screen is open) and see the finish, the
 final standings with the player's own entry marked, and the solved stop's
 solution; and pull to refresh after a reset to find the quest no longer
-available. Without `PQ_SERVER_URL`, they check Options starts with
+available. On the puzzle screen they type a wrong code and then the right one
+(a simulator has no camera VisionKit can scan with, so the screen offers
+typing, as on a phone whose camera can't be used), reveal a hint, are asked
+before the hint that gives the solution away, answer wrongly and then rightly,
+and go on to the next stop; and see the quest paused and resumed, and the
+puzzle solved elsewhere, as by a teammate, through to the finish and back to
+the quest. Without `PQ_SERVER_URL`, they check Options starts with
 Production, choose the test server as a custom one and sign in to it (the
 sign-in screen naming it), and switch back to Production from the account
 menu, which asks first and signs out. Without the variables, the
@@ -267,7 +294,8 @@ every server (`PQ_SIGNED_OUT=1`) with Options as a new install has it
 (`PQ_RESET_SERVER=1`), both read only by debug builds. To prove a quest appears through a
 live update, a debug build launched with `PQ_UI_TESTING=1` (as the UI tests
 launch it) shows an invisible element, `home.live-updates` (and
-`quest.live-updates` on the quest screen), whose value is `connected` once
+`quest.live-updates` and `puzzle.live-updates` on the quest and puzzle
+screens), whose value is `connected` once
 live updates are connected and the screen has fetched since; the tests wait
 for it before changing anything, so nothing but the live update can show the
 change.

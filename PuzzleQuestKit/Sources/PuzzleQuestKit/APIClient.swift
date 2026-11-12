@@ -10,6 +10,9 @@ public struct APIClient: Sendable {
     /// The generated client, for this package's own code and tests.
     package let client: Client
 
+    /// The site, which puzzles' media paths are on.
+    public let server: URL
+
     /// The live-update websocket's address: `/api/v1/updates` on the site,
     /// over `wss:` (or `ws:` for a site on plain HTTP, such as a local one).
     public let liveUpdatesURL: URL
@@ -23,6 +26,7 @@ public struct APIClient: Sendable {
     }
 
     package init(server: URL, tokens: any TokenStore, transport: any ClientTransport) {
+        self.server = server
         var socket = URLComponents(
             url: server.appending(path: "api/v1/updates"), resolvingAgainstBaseURL: false)!
         socket.scheme = socket.scheme == "http" ? "ws" : "wss"
@@ -137,6 +141,73 @@ public struct APIClient: Sendable {
             throw .unexpectedResponse("createLiveTicket: \(output)")
         }
         return ticket.ticket
+    }
+
+    /// A stop's puzzle as its players see it, or nil if it isn't theirs to
+    /// see: not reached, or gone, as once the puzzle master has reset the
+    /// quest.
+    public func playerPuzzle(
+        questName: String, puzzleName: String
+    ) async throws(APIError) -> PlayerPuzzle? {
+        let output: Operations.GetPlayerPuzzle.Output
+        do throws(APIError) {
+            output = try await call {
+                try await client.getPlayerPuzzle(
+                    path: .init(questName: questName, puzzleName: puzzleName))
+            }
+        } catch .problem(let problem) where problem.status == 404 {
+            return nil
+        }
+        guard case .ok(let ok) = output, case .json(let puzzle) = ok.body else {
+            throw .unexpectedResponse("getPlayerPuzzle: \(output)")
+        }
+        return PlayerPuzzle(puzzle, server: server)
+    }
+
+    /// Starts the puzzle the players have found, with its activation code,
+    /// typed or read from its QR code.
+    /// - Parameter connectionId: the live-update connection, which then isn't
+    ///   sent the update about it.
+    public func activatePuzzle(
+        questName: String, puzzleName: String, code: String, connectionId: String?
+    ) async throws(APIError) {
+        let output = try await call {
+            try await client.activatePuzzle(
+                path: .init(questName: questName, puzzleName: puzzleName),
+                body: .json(.init(activationCode: code, connectionId: connectionId)))
+        }
+        guard case .ok = output else {
+            throw .unexpectedResponse("activatePuzzle: \(output)")
+        }
+    }
+
+    /// Guesses a puzzle's solution. A wrong guess is a problem,
+    /// `/problems/wrong-answer`.
+    public func attemptSolution(
+        questName: String, puzzleName: String, guess: String, connectionId: String?
+    ) async throws(APIError) {
+        let output = try await call {
+            try await client.attemptSolution(
+                path: .init(questName: questName, puzzleName: puzzleName),
+                body: .json(.init(guess: guess, connectionId: connectionId)))
+        }
+        guard case .ok = output else {
+            throw .unexpectedResponse("attemptSolution: \(output)")
+        }
+    }
+
+    /// Reveals a puzzle's next hint, adding its penalty to the players' time.
+    public func revealHint(
+        questName: String, puzzleName: String, connectionId: String?
+    ) async throws(APIError) {
+        let output = try await call {
+            try await client.revealHint(
+                path: .init(questName: questName, puzzleName: puzzleName),
+                body: .json(.init(connectionId: connectionId)))
+        }
+        guard case .ok = output else {
+            throw .unexpectedResponse("revealHint: \(output)")
+        }
     }
 
     /// Sends the user another email with the link that verifies their address.

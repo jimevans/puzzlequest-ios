@@ -43,23 +43,38 @@ enum TestSite {
         try await signedIn(adminUserName, password: adminPassword)
     }
 
-    /// Makes a quest of one stop for a player to play on their own, without
-    /// starting it.
-    static func makeQuest(for player: String, admin: APIClient) async throws -> String {
-        try await makeQuest(for: [player], admin: admin)
+    /// Makes a quest for a player to play on their own, without starting it.
+    static func makeQuest(
+        for player: String, stops: Int = 1, admin: APIClient
+    ) async throws -> String {
+        try await makeQuest(for: [player], stops: stops, admin: admin)
     }
 
-    /// Makes a quest of one stop, each player playing it on their own (a race,
-    /// for more than one), without starting it.
-    static func makeQuest(for players: [String], admin: APIClient) async throws -> String {
-        let puzzleName = unique("puzzle")
-        let puzzle = try await admin.client.createPuzzle(
-            body: .json(
-                .init(
-                    puzzleName: puzzleName, displayName: "A puzzle", text: "What has keys?",
-                    solutionKeyword: "piano", solutionText: "A piano")))
-        guard case .created = puzzle else {
-            throw APIError.unexpectedResponse("createPuzzle: \(puzzle)")
+    /// Makes a quest, each player playing it on their own (a race, for more
+    /// than one), without starting it. Its first stop is "A puzzle", the
+    /// others "Another puzzle"; each is solved by "piano", and has two hints,
+    /// the second giving the solution away.
+    static func makeQuest(
+        for players: [String], stops: Int = 1, admin: APIClient
+    ) async throws -> String {
+        var puzzleNames: [String] = []
+        for stop in 1...stops {
+            let puzzleName = unique("puzzle")
+            let puzzle = try await admin.client.createPuzzle(
+                body: .json(
+                    .init(
+                        puzzleName: puzzleName,
+                        displayName: stop == 1 ? "A puzzle" : "Another puzzle",
+                        text: "What has *keys*?", solutionKeyword: "piano",
+                        solutionText: "A piano",
+                        hints: [
+                            .init(text: "It makes music", timePenaltySeconds: 60),
+                            .init(text: "A piano", solutionWarning: true, timePenaltySeconds: 300),
+                        ])))
+            guard case .created = puzzle else {
+                throw APIError.unexpectedResponse("createPuzzle: \(puzzle)")
+            }
+            puzzleNames.append(puzzleName)
         }
         let questName = unique("quest")
         let quest = try await admin.client.createQuest(
@@ -67,11 +82,25 @@ enum TestSite {
                 .init(
                     questName: questName, displayName: "Quest \(questName)",
                     entrants: players.map { .init(kind: .init(value1: .player), name: $0) },
-                    puzzles: [.init(puzzleName: puzzleName)])))
+                    puzzles: puzzleNames.map { .init(puzzleName: $0) })))
         guard case .created = quest else {
             throw APIError.unexpectedResponse("createQuest: \(quest)")
         }
         return questName
+    }
+
+    /// A puzzle's activation code, as the administrator sees it.
+    static func activationCode(
+        _ questName: String, puzzleName: String, admin: APIClient
+    ) async throws -> String {
+        guard case .ok(let ok) = try await admin.client.getQuest(path: .init(questName: questName)),
+            case .json(let full) = ok.body
+        else {
+            throw APIError.unexpectedResponse("getQuest as the administrator")
+        }
+        return try #require(
+            full.entries.lazy.flatMap(\.puzzles).first { $0.puzzleName == puzzleName }?
+                .activationCode)
     }
 
     /// As the player, finds the quest's current stop (with the code the
@@ -81,29 +110,11 @@ enum TestSite {
     ) async throws {
         let quest = try #require(try await player.playerQuest(questName: questName))
         let stop = try #require(quest.entry.currentStop)
-        guard case .ok(let ok) = try await admin.client.getQuest(path: .init(questName: questName)),
-            case .json(let full) = ok.body
-        else {
-            throw APIError.unexpectedResponse("getQuest as the administrator")
-        }
-        let code = try #require(
-            full.entries.lazy.flatMap(\.puzzles).first { $0.puzzleName == stop.puzzleName }?
-                .activationCode)
-        let path = Operations.ActivatePuzzle.Input.Path(
-            questName: questName, puzzleName: stop.puzzleName)
-        guard
-            case .ok = try await player.client.activatePuzzle(
-                path: path, body: .json(.init(activationCode: code)))
-        else {
-            throw APIError.unexpectedResponse("activatePuzzle")
-        }
-        guard
-            case .ok = try await player.client.attemptSolution(
-                path: .init(questName: questName, puzzleName: stop.puzzleName),
-                body: .json(.init(guess: "piano")))
-        else {
-            throw APIError.unexpectedResponse("attemptSolution")
-        }
+        let code = try await activationCode(questName, puzzleName: stop.puzzleName, admin: admin)
+        try await player.activatePuzzle(
+            questName: questName, puzzleName: stop.puzzleName, code: code, connectionId: nil)
+        try await player.attemptSolution(
+            questName: questName, puzzleName: stop.puzzleName, guess: "piano", connectionId: nil)
     }
 
     static func reset(_ questName: String, admin: APIClient) async throws {
