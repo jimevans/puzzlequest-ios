@@ -28,13 +28,7 @@ final class HomeUITests: XCTestCase {
         // Once live updates are connected (and the list fetched since), start
         // the quest. It can then only appear through the live update
         // (questsChanged): nothing else fetches the list.
-        let live = app.element("home.live-updates")
-        XCTAssertTrue(live.waitForExistence(timeout: 30), "the live-update state isn't shown")
-        let connected = XCTNSPredicateExpectation(
-            predicate: NSPredicate(format: "value == 'connected'"), object: live)
-        XCTAssertEqual(
-            XCTWaiter.wait(for: [connected], timeout: 30), .completed,
-            "live updates didn't connect")
+        app.waitForLiveUpdates("home.live-updates")
         try await server.start(quest.questName, admin: admin)
         let row = app.element("home.quest.\(quest.questName)")
         XCTAssertTrue(row.waitForExistence(timeout: 5), "the live update didn't show the quest")
@@ -43,9 +37,8 @@ final class HomeUITests: XCTestCase {
         XCTAssertFalse(app.element("home.empty").exists)
 
         row.tapWhenHittable()
-        let placeholder = app.element("quest.placeholder")
-        XCTAssertTrue(placeholder.waitForExistence(timeout: 10), "the quest didn't open")
-        XCTAssertEqual(placeholder.label, "Coming soon")
+        let stop = app.element("quest.current-stop")
+        XCTAssertTrue(stop.waitForExistence(timeout: 30), "the quest didn't open")
         XCTAssertTrue(app.navigationBars[quest.displayName].exists)
         app.navigationBars.buttons["Your quests"].tap()
 

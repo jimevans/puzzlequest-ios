@@ -89,6 +89,11 @@ server's origin could be accepted alongside the allowlist (see
 
 - `PuzzleQuest/`: the app itself, kept thin: its entry point, its screens
   (SwiftUI), and its words in `Localizable.xcstrings` (English only for now).
+  Building in Xcode adds new words to the catalog; after building with
+  `xcodebuild`, add them with `xcrun xcstringstool sync
+  PuzzleQuest/Localizable.xcstrings --stringsdata <file>` for each of the
+  app's `.stringsdata` files under `build/DerivedData` (not the UI tests'),
+  then give each new one a comment saying where it appears, for translators.
   The Xcode project uses folder-synchronized groups, so adding a file to a
   folder adds it to the app without changing the project file.
 - `PuzzleQuestKit/`: a Swift package holding everything that can be tested
@@ -151,9 +156,14 @@ seconds. Updates sent while disconnected are lost, so the screen fetches what
 it shows again each time the connection is made, as well as on each update
 and on coming back to the foreground. The follower runs for as long as the
 `.task` that runs it, so it stops when the screen goes away or the user signs
-out. The home screen follows the player's list of quests; the quest screen
-will follow a quest the same way (`LiveChannel.quest`), sending the
-connection's ID with its own actions.
+out. The home screen follows the player's list of quests
+(`LiveChannel.userQuests`); the quest screen follows its quest
+(`LiveChannel.quest`) and fetches it again on any update about it, as the web
+app does. The server sends a quest's followers nothing when the quest is
+started or reset (its API description says so; only the home screen's
+channel hears of those), so a quest reset while open shows as no longer
+available at its next fetch: pulling to refresh, coming back to the
+foreground, or reconnecting.
 
 ## Tests
 
@@ -167,7 +177,9 @@ These run on the Mac, with [Swift Testing](https://developer.apple.com/documenta
 reading newer responses, explaining errors, restoring and ending sessions
 against a fake network, the Keychain, following live updates over a fake
 websocket, fetching every page of a list, a quest's clock, the home screen's
-model and email reminder, who sees which home screen, which server addresses
+model and email reminder, reading a player's quest and a race's standings,
+what's announced as a quest changes, the quest screen's model, who sees
+which home screen, which server addresses
 each build allows, checking a server is PuzzleQuest's, keeping each server's
 token apart, and switching servers. They also run in the simulator as
 part of `xcodebuild test` (below), except the Keychain test, which needs an
@@ -210,8 +222,12 @@ They sign in, check the session, sign out, and check the problems the server
 sends for a wrong password, an invalid request, and too many attempts; fetch
 a new player's quests before and after a quest is made and started for them;
 get live tickets; follow the player's quests over the real websocket and hear
-of a quest starting; send the verification email again until it's
-refused, all through the generated client; and check that the check before
+of a quest starting; fetch a quest as its player before and after it starts,
+solve its stop (finding the activation code as the administrator) and see it
+finished with its solution, see a two-player race's standings provisional and
+then final, find a reset quest no longer available, and hear of the player's
+own progress over the quest's websocket; send the verification email again
+until it's refused, all through the generated client; and check that the check before
 switching servers accepts a real server. Without `PQ_TEST_SERVER_URL`
 they're skipped.
 
@@ -231,7 +247,12 @@ sign out through the account menu, and check a wrong password is explained,
 the link to sign up, and that an administrator is sent to the website. As a
 new player, they see an empty list, then a quest that the test starts through
 the API appear by itself (a live update), open it, and send the verification
-email again. Without `PQ_SERVER_URL`, they check Options starts with
+email again. On the quest screen they see the current stop, and the quest
+paused and resumed as the administrator does it; finish a race (both players
+solving through the API while the screen is open) and see the finish, the
+final standings with the player's own entry marked, and the solved stop's
+solution; and pull to refresh after a reset to find the quest no longer
+available. Without `PQ_SERVER_URL`, they check Options starts with
 Production, choose the test server as a custom one and sign in to it (the
 sign-in screen naming it), and switch back to Production from the account
 menu, which asks first and signs out. Without the variables, the
@@ -245,10 +266,11 @@ tests dismiss it (`dismissSavePassword()`). Each launch starts signed out of
 every server (`PQ_SIGNED_OUT=1`) with Options as a new install has it
 (`PQ_RESET_SERVER=1`), both read only by debug builds. To prove a quest appears through a
 live update, a debug build launched with `PQ_UI_TESTING=1` (as the UI tests
-launch it) shows an invisible element, `home.live-updates`, whose value is
-`connected` once live updates are connected and the list has been fetched
-since; the test waits for it before starting the quest, so nothing but the
-live update can show it.
+launch it) shows an invisible element, `home.live-updates` (and
+`quest.live-updates` on the quest screen), whose value is `connected` once
+live updates are connected and the screen has fetched since; the tests wait
+for it before changing anything, so nothing but the live update can show the
+change.
 
 In Xcode, run the tests with ⌘U; for the UI tests, add the `TEST_RUNNER_`
 variables' values, without the prefix, to the scheme's Test environment.

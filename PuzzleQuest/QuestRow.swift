@@ -66,7 +66,8 @@ struct QuestTime: View {
         .accessibilityLabel(Text("Time: \(Self.spoken(milliseconds))"))
     }
 
-    private static func spoken(_ milliseconds: Int) -> String {
+    /// A time as VoiceOver should say it, such as "1 hour, 4 minutes, 5 seconds".
+    static func spoken(_ milliseconds: Int) -> String {
         Duration.milliseconds(max(0, milliseconds) / 1000 * 1000)
             .formatted(.units(allowed: [.hours, .minutes, .seconds], width: .wide))
     }

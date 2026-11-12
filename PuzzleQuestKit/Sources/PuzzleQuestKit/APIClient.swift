@@ -98,6 +98,47 @@ public struct APIClient: Sendable {
         return ticket.ticket
     }
 
+    /// A quest as its player sees it, or nil if it isn't theirs to see: not
+    /// found, or with no entry of theirs, as once the puzzle master has reset
+    /// it.
+    public func playerQuest(questName: String) async throws(APIError) -> PlayerQuest? {
+        let output: Operations.GetQuest.Output
+        do throws(APIError) {
+            output = try await call {
+                try await client.getQuest(path: .init(questName: questName))
+            }
+        } catch .problem(let problem) where problem.status == 404 {
+            return nil
+        }
+        guard case .ok(let ok) = output, case .json(let quest) = ok.body else {
+            throw .unexpectedResponse("getQuest: \(output)")
+        }
+        return PlayerQuest(quest)
+    }
+
+    /// A quest's standings, as anyone who may follow it sees them.
+    public func standings(questName: String) async throws(APIError) -> Standings {
+        let output = try await call {
+            try await client.getSpectatorQuest(path: .init(questName: questName))
+        }
+        guard case .ok(let ok) = output, case .json(let quest) = ok.body else {
+            throw .unexpectedResponse("getSpectatorQuest: \(output)")
+        }
+        return Standings(quest)
+    }
+
+    /// A ticket for one connection to the live-update websocket to follow a
+    /// quest. Each can be used once.
+    public func questLiveTicket(questName: String) async throws(APIError) -> String {
+        let output = try await call {
+            try await client.createLiveTicket(path: .init(questName: questName))
+        }
+        guard case .created(let created) = output, case .json(let ticket) = created.body else {
+            throw .unexpectedResponse("createLiveTicket: \(output)")
+        }
+        return ticket.ticket
+    }
+
     /// Sends the user another email with the link that verifies their address.
     public func sendVerificationEmail(userName: String) async throws(APIError) {
         let output = try await call {

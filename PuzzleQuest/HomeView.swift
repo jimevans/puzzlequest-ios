@@ -35,7 +35,7 @@ struct HomeView: View {
             }
             .navigationTitle("Your quests")
             .navigationDestination(for: QuestRoute.self) { route in
-                QuestPlaceholderView(route: route)
+                QuestView(route: route, api: session.api)
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -175,22 +175,6 @@ struct QuestRoute: Hashable {
     init(_ quest: QuestSummary) {
         questName = quest.questName
         displayName = quest.displayName
-    }
-}
-
-/// Stands in for the quest's own screen, which comes next.
-struct QuestPlaceholderView: View {
-    let route: QuestRoute
-
-    var body: some View {
-        ContentUnavailableView {
-            Label(route.displayName, systemImage: "map")
-        } description: {
-            Text("Coming soon")
-                .accessibilityIdentifier("quest.placeholder")
-        }
-        .navigationTitle(route.displayName)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
