@@ -126,14 +126,29 @@ struct TestServer {
 }
 
 extension XCUIApplication {
-    /// The app, using the test server, starting signed out.
+    /// The app, using the test server for this run (PQ_SERVER_URL, whatever
+    /// Options says), starting signed out.
     @MainActor
     static func launchedSignedOut(_ server: TestServer) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment = [
-            "PQ_SERVER_URL": server.url.absoluteString, "PQ_SIGNED_OUT": "1",
+            "PQ_SERVER_URL": server.url.absoluteString,
+            // Signed out of every server, with Options as on a new install.
+            "PQ_SIGNED_OUT": "1", "PQ_RESET_SERVER": "1",
             // Shows the home screen's live-update state to the tests.
             "PQ_UI_TESTING": "1",
+        ]
+        app.launch()
+        return app
+    }
+
+    /// The app as a new install has it: signed out, using the server chosen
+    /// in Options, which is Production until a test chooses another.
+    @MainActor
+    static func launchedAsNew() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchEnvironment = [
+            "PQ_SIGNED_OUT": "1", "PQ_RESET_SERVER": "1", "PQ_UI_TESTING": "1",
         ]
         app.launch()
         return app
@@ -143,11 +158,8 @@ extension XCUIApplication {
     func signIn(userName: String, password: String) {
         let userNameField = textFields["sign-in.user-name"]
         XCTAssertTrue(userNameField.waitForExistence(timeout: 30), "the sign-in screen didn't show")
-        userNameField.tap()
-        userNameField.typeText(userName)
-        let passwordField = secureTextFields["sign-in.password"]
-        passwordField.tap()
-        passwordField.typeText(password)
+        userNameField.typeWhenFocused(userName)
+        secureTextFields["sign-in.password"].typeWhenFocused(password)
         buttons["sign-in.submit"].tap()
     }
 
@@ -184,14 +196,32 @@ extension XCUIApplication {
 
 extension XCUIElement {
     /// Taps it once it can be tapped: a sheet going away can still cover it
-    /// for a moment.
+    /// for a moment, and on CI's slower simulators a screen can be in the
+    /// app's hierarchy for many seconds before it's drawn and can be tapped,
+    /// so this waits as long as the tests wait for a screen to appear.
     @MainActor
-    func tapWhenHittable(timeout: TimeInterval = 10) {
+    func tapWhenHittable(timeout: TimeInterval = 30) {
         let hittable = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "hittable == true"), object: self)
         XCTAssertEqual(
             XCTWaiter.wait(for: [hittable], timeout: timeout), .completed,
             "\(self) couldn't be tapped")
         tap()
+    }
+
+    /// Types into it once it has the keyboard. On CI's slower simulators a
+    /// field can take a tap before it's ready to take focus, and typing then
+    /// has nowhere to go, so this taps until it has focus.
+    @MainActor
+    func typeWhenFocused(_ text: String) {
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        for _ in 1...3 {
+            tapWhenHittable()
+            let hasFocus = XCTNSPredicateExpectation(predicate: focused, object: self)
+            if XCTWaiter.wait(for: [hasFocus], timeout: 10) == .completed { break }
+        }
+        XCTAssertTrue(
+            focused.evaluate(with: self), "\(self) didn't take the keyboard")
+        typeText(text)
     }
 }

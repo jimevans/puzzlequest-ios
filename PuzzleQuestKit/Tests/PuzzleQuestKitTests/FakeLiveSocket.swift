@@ -100,9 +100,11 @@ final class FakeLiveSocketConnector: LiveSocketConnector {
 
 /// Waits for something the code under test does in the background. It runs
 /// on its caller's actor (`#isolation`), so the condition can read the main
-/// actor's state when called from there.
+/// actor's state when called from there. The limit is generous because CI's
+/// simulators can be many times slower than a Mac, and waiting costs nothing
+/// once the condition holds.
 func eventually(
-    _ what: String, timeout: Duration = .seconds(5),
+    _ what: String, timeout: Duration = .seconds(30),
     isolation: isolated (any Actor)? = #isolation,
     sourceLocation: SourceLocation = #_sourceLocation,
     _ condition: () async -> Bool

@@ -12,7 +12,9 @@ So far it signs in and out, keeping its session between launches, and shows
 a player their quests, kept up to date live as they start and change, with a
 reminder to verify their email address. Staff and administrators, whose tools
 are on the website, are told so. Signing up and the rest of an account's
-pages are on the website for now; the sign-in screen links there.
+pages are on the website for now; the sign-in screen links there. Options,
+from the sign-in screen or the account menu, chooses which PuzzleQuest server
+the app uses (below).
 
 ## Requirements
 
@@ -41,12 +43,16 @@ Open `PuzzleQuest.xcodeproj` in Xcode and run the **PuzzleQuest** scheme on a
 simulator. The first time, Xcode asks you to trust the OpenAPI generator's
 build plugin, which writes the API client as the app builds.
 
-A debug build uses the server at <http://localhost:3000>; a release build uses
-<https://thepuzzlequest.com>. To run a server locally, follow the server
-repository's README ("Local setup"): `npm run dev`, then `npm run seed` for
-sample users (such as `alex`, password `puzzlequest sample`) and quests. To
-point a debug build at another server, set the `PQ_SERVER_URL` environment
-variable in the scheme's Run options.
+Every build starts out using <https://thepuzzlequest.com>. To use a server on
+your Mac, tap **Options** on the sign-in screen and choose **This Mac**
+(<http://localhost:3000>; debug builds only). To run a server locally, follow
+the server repository's README ("Local setup"): `npm run dev`, then
+`npm run seed` for sample users (such as `alex`, password
+`puzzlequest sample`) and quests. **Custom** takes any other address; a debug
+build allows any http or https address, a release build only
+thepuzzlequest.com and its subdomains, over HTTPS. To point a debug build at a
+server for a run without changing Options, set the `PQ_SERVER_URL`
+environment variable in the scheme's Run options, as the UI tests do.
 
 From the command line:
 
@@ -60,6 +66,25 @@ xcodebuild build -project PuzzleQuest.xcodeproj -scheme PuzzleQuest \
 `-onlyUsePackageVersionsFromResolvedFile` stops Xcode from moving to newer
 versions than those pinned.
 
+## Choosing the server
+
+The server is a setting, kept in `UserDefaults`; a debug build's
+`PQ_SERVER_URL` overrides it for that run without changing it.
+`ServerAddressPolicy` decides which addresses a build may use: release builds
+an allowlist (https, thepuzzlequest.com or a subdomain, no other port; no user
+name, path, query or fragment), debug builds any http or https address. A
+custom address is reduced to its origin, then checked to be a PuzzleQuest
+server (`ServerCheck` fetches `/api/v1/openapi.json` and reads its title and
+version) before the app switches to it. Each server's session token is a
+Keychain item of its own, keyed by the server's origin, so one server's token
+is never sent to another. Switching servers (`ServerConnection.switchTo`)
+asks first when someone is signed in, then forgets the old server's token,
+tells that server the session has ended, and makes a new session and API
+client for the new one; the app rebuilds its screens for it. If servers
+outside PuzzleQuest's domain are wanted later, a signed statement of the
+server's origin could be accepted alongside the allowlist (see
+`ServerAddressPolicy.admit`).
+
 ## Layout
 
 - `PuzzleQuest/`: the app itself, kept thin: its entry point, its screens
@@ -72,14 +97,15 @@ versions than those pinned.
     `openapi.json` there. Nothing in it is written by hand.
   - `Sources/PuzzleQuestKit`: what the screens use: `APIClient` (the calls,
     returning the app's own types and throwing `APIError`), `SessionStore`
-    (who is signed in, kept in the Keychain), `LiveUpdateFollower` (live
+    (who is signed in, kept in the Keychain), `ServerConnection` (the chosen
+    server and its session), `LiveUpdateFollower` (live
     updates over the API's websocket, below), and view models such as
-    `SignInModel` and `HomeModel`.
+    `SignInModel`, `HomeModel` and `OptionsModel`.
   - `Tests/PuzzleQuestKitTests`: unit tests. `Tests/ContractTests`: tests
     against a real server.
 - `PuzzleQuestUITests/`: UI tests (XCUITest) of whole journeys in the app.
-- `Config/`: the app's Info.plist for each build configuration. The debug one
-  allows plain HTTP to local servers.
+- `Config/`: the debug build's Info.plist additions: it allows plain HTTP, to
+  any server.
 - `api/`: the pinned API release: its description (`openapi.json`), its
   live-update messages (`live-updates.json`), and its tag (`VERSION`).
 - `scripts/`: moving to a new API release, and running the test server.
@@ -141,7 +167,9 @@ These run on the Mac, with [Swift Testing](https://developer.apple.com/documenta
 reading newer responses, explaining errors, restoring and ending sessions
 against a fake network, the Keychain, following live updates over a fake
 websocket, fetching every page of a list, a quest's clock, the home screen's
-model and email reminder, and who sees which home screen. They also run in the simulator as
+model and email reminder, who sees which home screen, which server addresses
+each build allows, checking a server is PuzzleQuest's, keeping each server's
+token apart, and switching servers. They also run in the simulator as
 part of `xcodebuild test` (below), except the Keychain test, which needs an
 app there.
 
@@ -182,8 +210,9 @@ They sign in, check the session, sign out, and check the problems the server
 sends for a wrong password, an invalid request, and too many attempts; fetch
 a new player's quests before and after a quest is made and started for them;
 get live tickets; follow the player's quests over the real websocket and hear
-of a quest starting; and send the verification email again until it's
-refused, all through the generated client. Without `PQ_TEST_SERVER_URL`
+of a quest starting; send the verification email again until it's
+refused, all through the generated client; and check that the check before
+switching servers accepts a real server. Without `PQ_TEST_SERVER_URL`
 they're skipped.
 
 ### UI tests, and everything in the simulator
@@ -202,14 +231,19 @@ sign out through the account menu, and check a wrong password is explained,
 the link to sign up, and that an administrator is sent to the website. As a
 new player, they see an empty list, then a quest that the test starts through
 the API appear by itself (a live update), open it, and send the verification
-email again. Without the variables, the
+email again. Without `PQ_SERVER_URL`, they check Options starts with
+Production, choose the test server as a custom one and sign in to it (the
+sign-in screen naming it), and switch back to Production from the account
+menu, which asks first and signs out. Without the variables, the
 UI tests are skipped. The UI tests find controls by their accessibility
 identifiers (such as `sign-in.user-name`), so those stay put when wording
 changes. Two things to know when adding identifiers: one on a container
 (a stack, say) is given to everything inside it, replacing theirs; and a
 menu's items don't keep theirs, so tests find those by label. After a new
 user signs in, iOS offers to save the password, covering the screen; the
-tests dismiss it (`dismissSavePassword()`). To prove a quest appears through a
+tests dismiss it (`dismissSavePassword()`). Each launch starts signed out of
+every server (`PQ_SIGNED_OUT=1`) with Options as a new install has it
+(`PQ_RESET_SERVER=1`), both read only by debug builds. To prove a quest appears through a
 live update, a debug build launched with `PQ_UI_TESTING=1` (as the UI tests
 launch it) shows an invisible element, `home.live-updates`, whose value is
 `connected` once live updates are connected and the list has been fetched

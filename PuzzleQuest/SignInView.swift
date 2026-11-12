@@ -1,8 +1,12 @@
 import PuzzleQuestKit
 import SwiftUI
 
+/// Signing in, to the server chosen in Options, which it names unless it's
+/// Production.
 struct SignInView: View {
+    @Environment(ServerConnection.self) private var connection
     @State private var model: SignInModel
+    @State private var showingOptions = false
     @FocusState private var focus: Field?
 
     private enum Field {
@@ -33,6 +37,10 @@ struct SignInView: View {
                         .focused($focus, equals: .password)
                         .onSubmit(signIn)
                         .accessibilityIdentifier("sign-in.password")
+                } header: {
+                    if connection.server != .production {
+                        serverNote
+                    }
                 } footer: {
                     if let failure = model.failure {
                         // An icon as well as color, so it doesn't rely on color alone.
@@ -61,13 +69,22 @@ struct SignInView: View {
                 }
                 // Signing up is on the website until the app has it.
                 Section {
-                    Link(destination: ServerAddress.current) {
+                    Link(destination: connection.server.url) {
                         Text("New to PuzzleQuest? Sign up on the website")
                     }
                     .accessibilityIdentifier("sign-in.sign-up")
                 }
             }
             .navigationTitle("Sign in")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Options", systemImage: "gearshape") { showingOptions = true }
+                        .accessibilityIdentifier("sign-in.options")
+                }
+            }
+            .sheet(isPresented: $showingOptions) {
+                OptionsView(connection: connection)
+            }
         }
         // VoiceOver reads out a failure as soon as it's shown.
         .onChange(of: model.failure) { _, failure in
@@ -75,6 +92,22 @@ struct SignInView: View {
                 AccessibilityNotification.Announcement(String(localized: failure.message)).post()
             }
         }
+    }
+
+    /// Which server this is, when it isn't Production: worth knowing, but
+    /// not a warning.
+    private var serverNote: some View {
+        Label {
+            Text("Signing in to \(connection.server.displayName)")
+        } icon: {
+            Image(systemName: "server.rack")
+        }
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        // Section headers are in capitals by default; a server's name isn't.
+        .textCase(nil)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("sign-in.server")
     }
 
     private func signIn() {
@@ -101,9 +134,9 @@ extension SignInFailure {
 }
 
 #Preview {
-    let tokens = InMemoryTokenStore()
-    SignInView(
-        session: SessionStore(
-            api: APIClient(server: URL(string: "http://localhost:3000")!, tokens: tokens),
-            tokens: tokens))
+    let connection = ServerConnection(
+        setting: ServerSetting(defaults: UserDefaults(suiteName: "preview")!, policy: .anyAddress),
+        vault: InMemoryTokenVault(), policy: .anyAddress, fixed: .thisMac)
+    SignInView(session: connection.session)
+        .environment(connection)
 }
