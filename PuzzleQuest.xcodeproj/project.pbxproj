@@ -27,9 +27,21 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		505100000000000000000012 /* PuzzleQuest */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PuzzleQuest; sourceTree = "<group>"; };
-		505100000000000000000022 /* PuzzleQuestUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = PuzzleQuestUITests; sourceTree = "<group>"; };
-		505100000000000000000031 /* Config */ = {isa = PBXFileSystemSynchronizedRootGroup; path = Config; sourceTree = "<group>"; };
+		505100000000000000000012 /* PuzzleQuest */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PuzzleQuest;
+			sourceTree = "<group>";
+		};
+		505100000000000000000022 /* PuzzleQuestUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = PuzzleQuestUITests;
+			sourceTree = "<group>";
+		};
+		505100000000000000000031 /* Config */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Config;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -259,12 +271,13 @@
 				CODE_SIGN_ENTITLEMENTS = Config/PuzzleQuest.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y2P2CL7R6Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Config/Info-Debug.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = PuzzleQuest;
-				INFOPLIST_KEY_NSCameraUsageDescription = "PuzzleQuest uses the camera to scan the QR code that starts each puzzle.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PuzzleQuest uses the camera to scan the QR code that starts each puzzle.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,11 +301,12 @@
 				CODE_SIGN_ENTITLEMENTS = Config/PuzzleQuest.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = Y2P2CL7R6Y;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = PuzzleQuest;
-				INFOPLIST_KEY_NSCameraUsageDescription = "PuzzleQuest uses the camera to scan the QR code that starts each puzzle.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				INFOPLIST_KEY_NSCameraUsageDescription = "PuzzleQuest uses the camera to scan the QR code that starts each puzzle.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
