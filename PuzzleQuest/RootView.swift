@@ -40,7 +40,7 @@ struct RestoreFailedView: View {
             Text("Check your internet connection, then try again.")
         } actions: {
             Button("Try again") { Task { await session.restore() } }
-                .buttonStyle(.borderedProminent)
+                .prominentButton()
                 .accessibilityIdentifier("restore.retry")
             Button("Sign out") { Task { await session.signOut() } }
                 .accessibilityIdentifier("restore.sign-out")

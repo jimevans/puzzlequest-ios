@@ -25,7 +25,7 @@ struct WebsiteNoteView: View {
                 Link(destination: website) {
                     Text("Open \(connection.server.displayName)")
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButton()
                 .accessibilityIdentifier("website.open")
                 Button("Sign out") {
                     isSigningOut = true

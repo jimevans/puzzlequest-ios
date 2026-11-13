@@ -125,6 +125,20 @@ server's origin could be accepted alongside the allowlist (see
   carry (`push-notifications.json`, from 1.1), and its tag (`VERSION`).
 - `scripts/`: moving to a new API release, and running the test server.
 
+## The brand
+
+The app's colors, logo and icon come from the brand in the server repository
+(`brand/`, whose README lists the colors). Here they're in
+`PuzzleQuest/Assets.xcassets`: the app icon (`brand/icons/ios-app-icon.png`),
+the logo (`brand/logo.svg`, kept as a vector), the brand's colors, and the
+accent color, which tints the app: the brand's purple, or in dark mode a
+lavender that's readable on black. Filled buttons use `.prominentButton()`,
+which keeps their text readable on both. Headings and clocks use the brand's
+display face, Barlow Condensed Bold (`PuzzleQuest/Fonts/`, under the SIL Open
+Font License, registered at launch), through `Font.brand(_:)`, which scales
+with Dynamic Type; everything else keeps the system's font. When the brand
+changes, copy the new files over these.
+
 ## The API and moving to a new release
 
 The app is written against the API description published with a release of

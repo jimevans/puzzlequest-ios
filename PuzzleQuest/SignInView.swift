@@ -23,6 +23,11 @@ struct SignInView: View {
         NavigationStack {
             Form {
                 Section {
+                    BrandMark()
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
+                }
+                Section {
                     TextField("User name", text: $model.userName)
                         .textContentType(.username)
                         .textInputAutocapitalization(.never)
