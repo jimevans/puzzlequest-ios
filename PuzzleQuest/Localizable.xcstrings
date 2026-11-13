@@ -249,6 +249,9 @@
     "Open %@" : {
       "comment" : "Link to the website on the staff and administrators' screen; the argument is the site's address, such as thepuzzlequest.com."
     },
+    "Open the puzzle" : {
+      "comment" : "The label on the current stop's card, which opens its puzzle"
+    },
     "Opens the challenge" : {
       "comment" : "VoiceOver hint on a challenge in the list of the puzzle master's messages."
     },

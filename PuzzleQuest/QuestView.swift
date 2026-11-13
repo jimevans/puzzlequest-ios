@@ -234,6 +234,7 @@ struct QuestProgressList: View {
                     ) {
                         CurrentStopCard(stop: stop)
                     }
+                    .listRowBackground(Color.aubergine)
                     .accessibilityHint(Text("Opens the puzzle"))
                     .accessibilityIdentifier("quest.current-stop")
                 }
@@ -241,6 +242,7 @@ struct QuestProgressList: View {
             if quest.entry.isFinished {
                 Section {
                     finish
+                        .listRowBackground(Color.aubergine)
                 }
                 if let standings {
                     StandingsSection(standings: standings, ownEntry: quest.entry)
@@ -275,7 +277,7 @@ struct QuestProgressList: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             ClockText(clock: quest.entry.clock, part: .total)
-                .font(.largeTitle.weight(.semibold))
+                .font(.brand(.largeTitle))
             Group {
                 if quest.entry.clock.penaltyMs > 0 {
                     Text(
@@ -293,22 +295,34 @@ struct QuestProgressList: View {
         .accessibilityIdentifier("quest.summary")
     }
 
+    /// The end of the line, in gold on aubergine, as on the website.
     private var finish: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Label("End of the line", systemImage: "flag.checkered")
-                .font(.title2.weight(.semibold))
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Color.gold)
+                    .frame(height: 6)
+                Circle()
+                    .fill(Color.gold)
+                    .frame(width: 24, height: 24)
+            }
+            .accessibilityHidden(true)
+            Text("End of the line")
+                .font(.brand(.title))
             Text(
                 "Congratulations! You finished \(quest.displayName) in \(QuestClock.format(milliseconds: quest.entry.clock.totalMs))."
             )
         }
-        .padding(.vertical, 4)
+        .foregroundStyle(.white)
+        .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("quest.finished")
     }
 }
 
-/// The stop being played, large: its number, name, where it stands, and its
-/// time. Tapping it opens its puzzle.
+/// The stop being played, large, on the brand's aubergine (the list gives it
+/// the background): its number, name, where it stands, and its time. Tapping it
+/// opens its puzzle.
 struct CurrentStopCard: View {
     let stop: Stop
 
@@ -317,17 +331,27 @@ struct CurrentStopCard: View {
             Text("Stop \(stop.number)")
                 .font(.subheadline.weight(.semibold))
                 .textCase(.uppercase)
-                .foregroundStyle(.tint)
+                .foregroundStyle(Color.aubergineSoft)
             Text(stop.displayName)
-                .font(.title2.weight(.semibold))
+                .font(.brand(.title))
             Text(stop.statusDescription)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.aubergineSoft)
             if let clock = stop.clock {
                 ClockText(clock: clock, part: .total)
                     .font(.title3)
             }
+            // What tapping does, in gold. VoiceOver hears it as the hint.
+            Text("Open the puzzle", comment: "The label on the current stop's card, which opens its puzzle")
+                .font(.headline)
+                .foregroundStyle(Color.aubergine)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.gold, in: Capsule())
+                .padding(.top, 6)
+                .accessibilityHidden(true)
         }
-        .padding(.vertical, 6)
+        .foregroundStyle(.white)
+        .padding(.vertical, 8)
         .accessibilityElement(children: .combine)
     }
 }

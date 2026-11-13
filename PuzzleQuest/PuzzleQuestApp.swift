@@ -6,6 +6,10 @@ struct PuzzleQuestApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var connection = AppServer.connect()
 
+    init() {
+        BrandFont.register()
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

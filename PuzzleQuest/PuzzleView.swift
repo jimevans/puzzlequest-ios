@@ -396,7 +396,7 @@ struct SolvedSection: View {
                     Text("On to \(next.displayName)")
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .prominentButton()
                 .controlSize(.large)
                 .accessibilityIdentifier("puzzle.next-stop")
             } else if puzzle.questFinished {
@@ -492,7 +492,7 @@ struct AnswerForm: View {
                     }
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .prominentButton()
             .controlSize(.large)
             .disabled(isDisabled || isPending)
             .accessibilityIdentifier("\(identifier).send")

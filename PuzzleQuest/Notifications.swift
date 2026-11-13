@@ -117,7 +117,7 @@ struct NotificationsCard: View {
             .foregroundStyle(.secondary)
             HStack {
                 Button("Turn on") { Task { await push.turnOn() } }
-                    .buttonStyle(.borderedProminent)
+                    .prominentButton()
                     .accessibilityIdentifier("quest.notifications.turn-on")
                 Button("Not now") { push.notNow(onQuest: questName) }
                     .buttonStyle(.bordered)
