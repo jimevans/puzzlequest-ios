@@ -113,6 +113,30 @@ struct QuestContractTests {
         }
     }
 
+    @Test("A player who can't be texted is reached by the puzzle master once their phone is registered")
+    func registeredPhone() async throws {
+        let (player, api) = try await TestSite.newPlayer()
+        let admin = try await TestSite.admin()
+        let questName = try await TestSite.makeQuest(for: player, admin: admin)
+        try await TestSite.start(questName, admin: admin)
+
+        // No phone number, and no app: no one to send it to.
+        do {
+            _ = try await admin.client.sendPlayerTextMessage(
+                path: .init(questName: questName, userName: player),
+                body: .json(.init(message: "Hello")))
+            Issue.record("a player with no way to be reached was sent a message")
+        } catch {
+            // The client's middleware turns the refusal into an error.
+            #expect("\(error)".contains("/problems/no-recipients"), "it was \(error)")
+        }
+
+        try await api.setPushTarget(token: TestSite.unique("phone"), environment: .development)
+        try await TestSite.sendChallenge(questName, to: player, admin: admin)
+        let quest = try #require(try await api.playerQuest(questName: questName))
+        #expect(quest.entry.waitingChallenge != nil)
+    }
+
     @Test("A quest reset by the puzzle master isn't available to its player")
     func reset() async throws {
         let (player, api) = try await TestSite.newPlayer()

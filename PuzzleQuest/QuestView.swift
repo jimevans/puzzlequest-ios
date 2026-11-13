@@ -11,6 +11,7 @@ struct QuestView: View {
     private let api: APIClient
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
+    @Environment(PushRegistrar.self) private var push
     @State private var model: QuestModel
     @State private var wasInBackground = false
 
@@ -41,6 +42,12 @@ struct QuestView: View {
             #endif
             .task { await model.load() }
             .task(id: model.followGeneration) { await model.followLiveUpdates() }
+            // While it's on screen, its notifications aren't shown: its live
+            // updates show what changed.
+            .onAppear { push.questOnScreen = route.questName }
+            .onDisappear {
+                if push.questOnScreen == route.questName { push.questOnScreen = nil }
+            }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .background:
@@ -80,6 +87,7 @@ struct QuestView: View {
         if let quest = model.quest {
             QuestProgressList(
                 quest: quest, standings: model.standings,
+                offersNotifications: push.offers(onQuest: quest.questName),
                 challengeAtTop: model.challengeAtTop,
                 onShowChallenge: { model.showChallenge() },
                 onHideChallenge: { model.hideAnsweredChallenge() }
@@ -179,6 +187,8 @@ struct StopRoute: Hashable {
 struct QuestProgressList: View {
     let quest: PlayerQuest
     let standings: Standings?
+    /// Whether to offer turning notifications on, above everything else.
+    var offersNotifications = false
     /// The challenge kept at the top: waiting, or answered and not hidden.
     var challengeAtTop: Challenge?
     /// Reopens the challenge, to answer it or show its confirmation.
@@ -199,6 +209,11 @@ struct QuestProgressList: View {
                     .foregroundStyle(.orange)
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("quest.paused")
+                }
+            }
+            if offersNotifications {
+                Section {
+                    NotificationsCard(questName: quest.questName)
                 }
             }
             // The puzzle master's challenge comes first: the players may be

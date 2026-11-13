@@ -178,6 +178,9 @@
     "From the puzzle master: %@" : {
       "comment" : "VoiceOver announcement when the puzzle master sends a message; the argument is the message."
     },
+    "Get told when it matters" : {
+      "comment" : "Quest screen: heading of the card offering to turn notifications on."
+    },
     "Give away the solution?" : {
       "comment" : "Puzzle screen: title of the alert asking before revealing a hint that gives the solution away."
     },
@@ -225,11 +228,17 @@
     "New to PuzzleQuest? Sign up on the website" : {
       "comment" : "Link on the sign-in screen that opens the website, where people sign up."
     },
+    "Not now" : {
+      "comment" : "Quest screen, on the card offering notifications: stops offering them on this quest."
+    },
     "Not ranked yet" : {
       "comment" : "Spoken by VoiceOver for a dash in the standings: an entry that hasn't finished, so has no place."
     },
     "Not started" : {
       "comment" : "Spoken by VoiceOver for a dash in the standings: an entry that hasn't started, so has no time."
+    },
+    "Notifications tell you when the quest starts, when the puzzle master pauses it or sends you a challenge, when a teammate solves a stop, and how a race ends, even with the app closed. With them on, the puzzle master's messages usually aren't texted to you as well." : {
+      "comment" : "Quest screen: what the card offering notifications says they're for."
     },
     "Now using %@" : {
       "comment" : "VoiceOver announcement after switching servers; the argument is the server's name, such as staging.thepuzzlequest.com."
@@ -505,6 +514,9 @@
     },
     "Try again" : {
       "comment" : "Button that tries again: checking a kept session with the server, or loading the player's quests."
+    },
+    "Turn on" : {
+      "comment" : "Quest screen, on the card offering notifications: asks iOS to let the app send them."
     },
     "Type your answer first." : {
       "comment" : "Quest screen: shown under the challenge's answer field when the player sends nothing."

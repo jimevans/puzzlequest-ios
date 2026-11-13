@@ -221,6 +221,16 @@ struct TestServer {
         try await call("POST", "quests/\(questName)/start", token: token)
     }
 
+    /// As the puzzle master, sends the player a message, without registering
+    /// a phone for them: refused (no recipients) unless they can be reached.
+    func sendMessage(
+        _ questName: String, to player: String, message: String, admin token: String
+    ) async throws {
+        try await call(
+            "POST", "quests/\(questName)/players/\(player)/text-messages", token: token,
+            body: ["message": message])
+    }
+
     /// As the puzzle master, sends the player a challenge whose answer is
     /// "lighthouse", and whose confirmation is "Show this to the bartender".
     /// It first registers a phone for the player on another session of

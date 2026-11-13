@@ -184,6 +184,22 @@ it, or its confirmation; an answered one's row can be hidden for good (also
 kept in `UserDefaults`). A challenge's entry in the messages opens it: the
 latest to answer or with its confirmation, an earlier one as it was asked.
 
+Push notifications (API 1.1, server decisions 0024 and 0025): the first time
+a player opens a quest, a card offers them, saying what they're for; Turn on
+asks iOS (once per install), and Not now stops offering on that quest
+(remembered in `UserDefaults`). Once allowed, the app asks Apple for the
+phone's token on every launch and registers it with the signed-in session
+(`PUT /sessions/current/push-target`), with every kind; signing out ends the
+session and its notifications. Registered, the player counts as having the
+app, so the puzzle master's messages aren't texted to them unless the quest
+says to. A notification about the quest on screen isn't shown, since its live
+updates show the change; tapping one opens its quest. The app has the Push
+Notifications capability (`Config/PuzzleQuest.entitlements`); a build from
+Xcode registers with Apple's sandbox (`development`), read from the app's
+provisioning profile, and one from the App Store or TestFlight with
+production. Real delivery needs the server's Apple settings, and is checked
+by hand on a phone.
+
 ## Tests
 
 ### Unit tests
@@ -202,6 +218,9 @@ answered challenge included), the quest screen's model (answering the
 challenge, rightly, wrongly, and after a teammate; new messages shown once,
 the challenge reopened, and an answered one hidden from the top for good),
 remembering which messages were shown and which challenge was hidden, reading a
+push notification (every kind the pinned `push-notifications.json` lists),
+which of Apple's services the app is for, offering notifications and
+registering the phone's token (once per token and server), reading a
 puzzle (its media on the site) and what's announced as it changes, telling
 refusals apart by their problem types, the puzzle screen's model (activating,
 a code left in front of the camera sent only once, guessing, hints, the
@@ -253,7 +272,8 @@ get live tickets; follow the player's quests over the real websocket and hear
 of a quest starting; fetch a quest as its player before and after it starts,
 solve its stop (finding the activation code as the administrator) and see it
 finished with its solution, see a two-player race's standings provisional and
-then final, receive a challenge from the puzzle master (with a phone
+then final, register a phone with the app's own call and so be reachable by
+the puzzle master without a phone number, receive a challenge from the puzzle master (with a phone
 registered for the player, so it can reach them) and have a wrong answer
 refused, a right one in other words accepted with its confirmation, and a
 second answer refused, find a reset quest no longer available, and hear of the player's
@@ -291,7 +311,11 @@ solution; see a challenge from the puzzle master pop up as it's sent, answer
 it wrongly and then rightly (in other words around its keyword), see the
 confirmation to show the staff, put it away and bring it back from the row at
 the top, hide the row, and open the challenge from the history to its
-confirmation; and see a reset make the quest no longer
+confirmation; on a new quest, see notifications offered and say Not now,
+which lasts after the app starts again (skipped once the simulator has
+answered iOS's question, which it remembers between runs), and turn them on,
+allowing them in iOS's prompt, after which the puzzle master can reach the
+player, who has no phone number, and the message pops up; and see a reset make the quest no longer
 available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked

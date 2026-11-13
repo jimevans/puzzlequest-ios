@@ -8,7 +8,12 @@ struct HomeView: View {
     @Environment(ServerConnection.self) private var connection
     @Environment(SessionStore.self) private var session
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(PushRegistrar.self) private var push
     @State private var model: HomeModel
+    /// The screens open over the list: a quest, and what it opens (a puzzle,
+    /// a stop, the messages), each a route of its own type, so a
+    /// `NavigationPath`, which holds any. A tapped notification replaces it.
+    @State private var path = NavigationPath()
     @State private var isSigningOut = false
     @State private var showingOptions = false
     /// Whether the app has been in the background since it was last active.
@@ -22,7 +27,7 @@ struct HomeView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 if !user.emailVerified {
                     Section {
@@ -54,6 +59,12 @@ struct HomeView: View {
         // it goes away (as on signing out), which stops following.
         .task { await model.load() }
         .task(id: model.followGeneration) { await model.followLiveUpdates() }
+        // Notifications: if allowed, Apple is asked for the phone's token on
+        // each launch, and the token registered with this session.
+        .task { await push.refresh() }
+        .task(id: push.deviceToken) { await push.register(with: session.api) }
+        // A tapped notification opens its quest, over whatever was open.
+        .task(id: push.questToOpen) { openTappedQuest() }
         // Back in the foreground (from the background, which passes through
         // inactive on the way), reconnect and fetch again: changes may have
         // been missed meanwhile.
@@ -160,6 +171,18 @@ struct HomeView: View {
 
     /// Fetches the quests again, and who is signed in, in case their email
     /// address has been verified since.
+    /// Opens the quest of a tapped notification, named as in the list if
+    /// it's there.
+    private func openTappedQuest() {
+        guard let questName = push.questToOpen else { return }
+        push.questToOpen = nil
+        let listed = model.quests?.first { $0.questName == questName }
+        var opened = NavigationPath()
+        opened.append(
+            listed.map(QuestRoute.init) ?? QuestRoute(questName: questName, displayName: questName))
+        path = opened
+    }
+
     private func refresh() async {
         async let quests: Void = model.load()
         async let user: Void = session.refreshUser()
@@ -175,6 +198,13 @@ struct QuestRoute: Hashable {
     init(_ quest: QuestSummary) {
         questName = quest.questName
         displayName = quest.displayName
+    }
+
+    /// A quest known only by name, as from a notification; its screen shows
+    /// its display name once loaded.
+    init(questName: String, displayName: String) {
+        self.questName = questName
+        self.displayName = displayName
     }
 }
 
