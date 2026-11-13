@@ -54,6 +54,17 @@ jobs:
         working-directory: PuzzleQuestKit
         run: swift test --force-resolved-versions --skip ContractTests
 
+      # A simulator started by the first test can come up with services
+      # still starting (CI has failed on "Connection to Simulator service hub
+      # interrupted", then on notifications and lost connections): start it
+      # first, and wait until it has finished booting.
+      - name: Start the simulator
+        run: |
+          udid=$(xcrun simctl list devices available -j | jq -r \
+            '.devices["com.apple.CoreSimulator.SimRuntime.iOS-27-2"][] | select(.name == "iPhone 18 Pro") | .udid')
+          : "${udid:?no iPhone 18 Pro simulator with iOS 27.2}"
+          xcrun simctl bootstatus "$udid" -b
+
       - name: Build the app
         run: xcodebuild build-for-testing $XCODEBUILD_FLAGS -destination "$DESTINATION"
 
@@ -91,3 +102,5 @@ jobs:
             build/Tests.xcresult
             .test-server/*.log
           if-no-files-found: ignore
+          # The server's logs are in .test-server/, which is otherwise left out.
+          include-hidden-files: true

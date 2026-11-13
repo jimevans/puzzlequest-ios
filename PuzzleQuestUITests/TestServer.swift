@@ -336,6 +336,19 @@ extension XCUIApplication {
     func element(_ identifier: String) -> XCUIElement {
         descendants(matching: .any)[identifier].firstMatch
     }
+
+    /// Scrolls the screen up until the element is there, as a person would
+    /// to find it: a list only builds the rows on screen, so one further
+    /// down doesn't exist until it's scrolled to.
+    @MainActor
+    func scrollTo(_ element: XCUIElement, timeout: TimeInterval = 5, swipes: Int = 6) -> Bool {
+        if element.waitForExistence(timeout: timeout) { return true }
+        for _ in 0..<swipes {
+            swipeUp()
+            if element.waitForExistence(timeout: 2) { return true }
+        }
+        return false
+    }
 }
 
 extension XCUIElement {
