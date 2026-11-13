@@ -37,6 +37,9 @@ public final class QuestModel {
     /// The puzzle master's messages to show over the quest screen, if any:
     /// those this phone hasn't shown yet, or the challenge reopened.
     public private(set) var messageSheet: MessageSheet?
+    /// The answered challenge the player hid from the quest screen, by its
+    /// `Challenge.id`.
+    private var hiddenChallenge: String?
 
     private let api: APIClient
     private let follower: LiveUpdateFollower
@@ -118,6 +121,23 @@ public final class QuestModel {
         messageSheet = MessageSheet(messages: [], showsChallenge: true)
     }
 
+    /// The challenge to keep at the top of the quest screen: one waiting for
+    /// its answer, or answered and not yet hidden.
+    public var challengeAtTop: Challenge? {
+        guard let challenge = quest?.entry.challenge else { return nil }
+        return challenge.answer != nil && challenge.id == hiddenChallenge ? nil : challenge
+    }
+
+    /// Takes an answered challenge off the quest screen for good on this
+    /// phone; it's still in the puzzle master's messages. A waiting one stays.
+    public func hideAnsweredChallenge() {
+        guard let challenge = quest?.entry.challenge, challenge.answer != nil,
+            let entryId = quest?.entry.id
+        else { return }
+        messagesSeen.hideChallenge(challenge.id, entryId: entryId)
+        hiddenChallenge = challenge.id
+    }
+
     /// Puts the messages away, recording them as shown on this phone.
     public func dismissMessages() {
         if let sheet = messageSheet, let entryId = quest?.entry.id {
@@ -136,9 +156,8 @@ public final class QuestModel {
         let unseen = quest.entry.messages.filter { !seen.contains($0.id) }
         guard unseen.contains(where: { !shown.contains($0.id) }) else { return }
         let challengeIsNew =
-            quest.entry.challenge.map { challenge in
-                unseen.contains { $0.isChallenge && $0.sentAt == challenge.sentAt }
-            } ?? false
+            quest.entry.challenge.map { challenge in unseen.contains(where: challenge.isSet(by:)) }
+            ?? false
         messageSheet = MessageSheet(
             messages: unseen.reversed(),
             showsChallenge: challengeIsNew || messageSheet?.showsChallenge == true)
@@ -181,6 +200,7 @@ public final class QuestModel {
             }
             notAvailable = false
             quest = fetched
+            hiddenChallenge = messagesSeen.hiddenChallenge(entryId: fetched.entry.id)
             showUnseenMessages(fetched)
             if let fetchedStandings {
                 // A quest one player or team played has no standings to show.

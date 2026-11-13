@@ -180,7 +180,9 @@ confirmation on every teammate's screen as soon as one of them answers it.
 New messages pop up in a sheet once on each phone (which ones it has shown are
 kept in `UserDefaults`), including those that came while the app was closed; a
 challenge is answered there, and a row at the top of the quest screen reopens
-it, or its confirmation, until the next one.
+it, or its confirmation; an answered one's row can be hidden for good (also
+kept in `UserDefaults`). A challenge's entry in the messages opens it: the
+latest to answer or with its confirmation, an earlier one as it was asked.
 
 ## Tests
 
@@ -198,7 +200,8 @@ model and email reminder, reading a player's quest and a race's standings,
 what's announced as a quest changes (the puzzle master's messages and an
 answered challenge included), the quest screen's model (answering the
 challenge, rightly, wrongly, and after a teammate; new messages shown once,
-and the challenge reopened), remembering which messages were shown, reading a
+the challenge reopened, and an answered one hidden from the top for good),
+remembering which messages were shown and which challenge was hidden, reading a
 puzzle (its media on the site) and what's announced as it changes, telling
 refusals apart by their problem types, the puzzle screen's model (activating,
 a code left in front of the camera sent only once, guessing, hints, the
@@ -287,7 +290,8 @@ final standings with the player's own entry marked, and the solved stop's
 solution; see a challenge from the puzzle master pop up as it's sent, answer
 it wrongly and then rightly (in other words around its keyword), see the
 confirmation to show the staff, put it away and bring it back from the row at
-the top, and find the message in the history; and see a reset make the quest no longer
+the top, hide the row, and open the challenge from the history to its
+confirmation; and see a reset make the quest no longer
 available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked

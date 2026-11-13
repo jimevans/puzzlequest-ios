@@ -58,7 +58,7 @@ struct MessageSheetView: View {
         guard sheet.showsChallenge, let challenge = entry.challenge else {
             return sheet.messages
         }
-        return sheet.messages.filter { !($0.isChallenge && $0.sentAt == challenge.sentAt) }
+        return sheet.messages.filter { !challenge.isSet(by: $0) }
     }
 }
 
@@ -151,39 +151,55 @@ struct ConfirmationCard: View {
 
 /// The small row at the top of the quest screen that reopens the challenge:
 /// to answer it while it waits, or, once answered, to show the confirmation
-/// to the staff, until the next one.
+/// to the staff. An answered one can be hidden for good with its ✕; it's
+/// still in the puzzle master's messages.
 struct ChallengeRow: View {
     let challenge: Challenge
     let onOpen: () -> Void
+    let onHide: () -> Void
 
     var body: some View {
-        Button(action: onOpen) {
-            HStack {
-                if challenge.answer == nil {
-                    Label {
-                        Text("Challenge waiting")
-                    } icon: {
-                        Image(systemName: "questionmark.bubble.fill")
+        HStack(spacing: 12) {
+            Button(action: onOpen) {
+                HStack {
+                    if challenge.answer == nil {
+                        Label {
+                            Text("Challenge waiting")
+                        } icon: {
+                            Image(systemName: "questionmark.bubble.fill")
+                                .foregroundStyle(.tint)
+                        }
+                        Spacer()
+                        Text("Answer")
+                            .foregroundStyle(.tint)
+                    } else {
+                        Label {
+                            Text("Challenge answered")
+                        } icon: {
+                            Image(systemName: "checkmark.seal.fill")
+                                .foregroundStyle(.green)
+                        }
+                        Spacer()
+                        Text("Show confirmation")
                             .foregroundStyle(.tint)
                     }
-                    Spacer()
-                    Text("Answer")
-                        .foregroundStyle(.tint)
-                } else {
-                    Label {
-                        Text("Challenge answered")
-                    } icon: {
-                        Image(systemName: "checkmark.seal.fill")
-                            .foregroundStyle(.green)
-                    }
-                    Spacer()
-                    Text("Show confirmation")
-                        .foregroundStyle(.tint)
                 }
+                .contentShape(Rectangle())
+            }
+            .foregroundStyle(.primary)
+            .accessibilityIdentifier("quest.challenge-row")
+            if challenge.answer != nil {
+                Button(action: onHide) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .accessibilityLabel(Text("Hide the answered challenge"))
+                .accessibilityIdentifier("quest.challenge-row.hide")
             }
         }
-        .foregroundStyle(.primary)
-        .accessibilityIdentifier("quest.challenge-row")
+        // Two buttons in one row: each answers only its own taps.
+        .buttonStyle(.borderless)
     }
 }
 
@@ -216,18 +232,76 @@ struct MessageRow: View {
 /// Where the row of the puzzle master's messages goes.
 struct MessagesRoute: Hashable {}
 
-/// Everything the puzzle master has sent the players, newest first.
+/// Where a challenge's entry in the messages goes: the message that set it.
+struct ChallengeRoute: Hashable {
+    let sentAt: Date
+}
+
+/// Everything the puzzle master has sent the players, newest first. A
+/// challenge's entry opens it.
 struct MessagesHistoryView: View {
     let model: QuestModel
 
     var body: some View {
         List {
             ForEach((model.quest?.entry.messages ?? []).reversed()) { message in
-                MessageRow(message: message)
+                if message.isChallenge {
+                    NavigationLink(value: ChallengeRoute(sentAt: message.sentAt)) {
+                        MessageRow(message: message)
+                    }
+                    .accessibilityHint(Text("Opens the challenge"))
+                } else {
+                    MessageRow(message: message)
+                }
             }
         }
         .navigationTitle("From the puzzle master")
         .navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("quest.messages")
+    }
+}
+
+/// One of the puzzle master's challenges, from the messages: the latest
+/// waiting for its answer, or answered with its confirmation for the staff;
+/// an earlier one only as it was asked, since a challenge replaces the one
+/// before.
+struct ChallengeDetailView: View {
+    let model: QuestModel
+    let sentAt: Date
+
+    var body: some View {
+        List {
+            if let entry = model.quest?.entry {
+                if let challenge = entry.challenge, challenge.sentAt == sentAt {
+                    Section {
+                        if let answer = challenge.answer {
+                            ConfirmationCard(answer: answer, entry: entry)
+                        } else {
+                            ChallengeQuestion(
+                                challenge: challenge,
+                                answering: ChallengeAnswering(
+                                    isPending: model.answeringChallenge,
+                                    error: model.challengeError,
+                                    answer: { await model.answerChallenge($0) }))
+                        }
+                    }
+                    if challenge.answer != nil {
+                        Section("The challenge") {
+                            Text(challenge.message)
+                        }
+                    }
+                } else if let message = entry.messages.first(where: {
+                    $0.isChallenge && $0.sentAt == sentAt
+                }) {
+                    Section {
+                        MessageRow(message: message, large: true)
+                    } footer: {
+                        Text("The puzzle master has sent another challenge since this one.")
+                    }
+                }
+            }
+        }
+        .navigationTitle("Challenge")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

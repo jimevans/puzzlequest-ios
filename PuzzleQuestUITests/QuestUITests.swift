@@ -99,11 +99,19 @@ final class QuestUITests: XCTestCase {
         XCTAssertTrue(confirmation.waitForExistence(timeout: 15), "the row didn't reopen it")
         app.buttons["quest.messages.done"].tapWhenHittable()
 
-        // The message stays in the history.
+        // Hidden, the row is gone for good.
+        app.buttons["quest.challenge-row.hide"].tapWhenHittable()
+        XCTAssertTrue(row.waitForNonExistence(timeout: 15), "the row wasn't hidden")
+
+        // The challenge is in the history, and opens to its confirmation.
         app.element("quest.messages-row").tapWhenHittable()
+        let entry = app.buttons.containing(
+            NSPredicate(format: "label CONTAINS 'What lights the harbour?'")
+        ).firstMatch
+        XCTAssertTrue(entry.waitForExistence(timeout: 15), "the challenge isn't in the history")
+        entry.tapWhenHittable()
         XCTAssertTrue(
-            app.staticTexts["What lights the harbour?"].waitForExistence(timeout: 15),
-            "the message isn't in the history")
+            confirmation.waitForExistence(timeout: 15), "the challenge didn't open to its confirmation")
     }
 
     @MainActor

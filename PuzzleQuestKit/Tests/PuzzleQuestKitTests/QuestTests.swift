@@ -386,6 +386,38 @@ struct QuestModelTests {
         quest.dismissMessages()
     }
 
+    @Test("An answered challenge can be hidden from the top for good; a waiting one can't; a new one shows")
+    func hidingTheChallenge() async {
+        let messages = [messageJSON("Riddle?", at: 10, challenge: true)]
+        let waiting = playerQuestJSON([stopJSON("quay")], messages: messages, challenge: challengeJSON("Riddle?"))
+        let answered = playerQuestJSON(
+            [stopJSON("quay")], messages: messages, challenge: challengeJSON("Riddle?", answeredVia: "app"))
+        let another = playerQuestJSON(
+            [stopJSON("quay")],
+            messages: messages + [messageJSON("Again?", at: 30, challenge: true)],
+            challenge: #"{"challengeId":"c1","message":"Again?","sentAt":"2026-11-11T16:30:00.000Z","answeredAt":null,"answeredVia":null}"#)
+        let seen = InMemoryMessagesSeen()
+        let quest = model(QuestServer(quests: [waiting, answered, answered, another]), seen: seen)
+        await quest.load()
+        quest.hideAnsweredChallenge()
+        #expect(quest.challengeAtTop?.message == "Riddle?")
+
+        await quest.load()
+        #expect(quest.challengeAtTop?.answer != nil)
+        quest.hideAnsweredChallenge()
+        #expect(quest.challengeAtTop == nil)
+        // It stays hidden, here and on opening the quest again.
+        await quest.load()
+        #expect(quest.challengeAtTop == nil)
+        let again = model(QuestServer(quests: [answered]), seen: seen)
+        await again.load()
+        #expect(again.challengeAtTop == nil)
+
+        // The same kept challenge sent again is a new one, so it shows.
+        await quest.load()
+        #expect(quest.challengeAtTop?.message == "Again?")
+    }
+
     @Test("Nothing reopens when there's no challenge")
     func noChallengeToShow() async {
         let quest = model(QuestServer(quests: [playerQuestJSON([stopJSON("quay")])]))
@@ -589,5 +621,11 @@ struct MessagesSeenTests {
         seen.markSeen(["c"], entryId: "e1")
         #expect(UserDefaultsMessagesSeen(defaults: defaults).seen(entryId: "e1") == ["a", "b", "c"])
         #expect(seen.seen(entryId: "e2").isEmpty)
+
+        #expect(seen.hiddenChallenge(entryId: "e1") == nil)
+        seen.hideChallenge("c1 1", entryId: "e1")
+        seen.hideChallenge("c1 2", entryId: "e1")
+        #expect(UserDefaultsMessagesSeen(defaults: defaults).hiddenChallenge(entryId: "e1") == "c1 2")
+        #expect(seen.hiddenChallenge(entryId: "e2") == nil)
     }
 }

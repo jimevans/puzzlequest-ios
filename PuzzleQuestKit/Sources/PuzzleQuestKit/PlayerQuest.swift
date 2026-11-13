@@ -148,6 +148,15 @@ public struct Challenge: Equatable, Sendable {
     /// The right answer, once a player has given it; nil while it waits.
     public var answer: ChallengeAnswer?
 
+    /// Tells this sending apart from another of the same kept challenge,
+    /// which the puzzle master may send again.
+    public var id: String { "\(challengeId) \(sentAt.timeIntervalSince1970)" }
+
+    /// Whether a message is the one that set this challenge.
+    public func isSet(by message: PuzzleMasterMessage) -> Bool {
+        message.isChallenge && message.sentAt == sentAt
+    }
+
     public init(challengeId: String, message: String, sentAt: Date, answer: ChallengeAnswer? = nil) {
         self.challengeId = challengeId
         self.message = message

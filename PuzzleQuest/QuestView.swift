@@ -30,6 +30,9 @@ struct QuestView: View {
             .navigationDestination(for: MessagesRoute.self) { _ in
                 MessagesHistoryView(model: model)
             }
+            .navigationDestination(for: ChallengeRoute.self) { route in
+                ChallengeDetailView(model: model, sentAt: route.sentAt)
+            }
             .navigationDestination(for: PuzzleRoute.self) { puzzle in
                 PuzzleView(questName: route.questName, route: puzzle, api: api)
             }
@@ -77,7 +80,9 @@ struct QuestView: View {
         if let quest = model.quest {
             QuestProgressList(
                 quest: quest, standings: model.standings,
-                onShowChallenge: { model.showChallenge() }
+                challengeAtTop: model.challengeAtTop,
+                onShowChallenge: { model.showChallenge() },
+                onHideChallenge: { model.hideAnsweredChallenge() }
             )
             .refreshable { await model.load() }
             .sheet(isPresented: messageSheetShown) {
@@ -174,8 +179,12 @@ struct StopRoute: Hashable {
 struct QuestProgressList: View {
     let quest: PlayerQuest
     let standings: Standings?
+    /// The challenge kept at the top: waiting, or answered and not hidden.
+    var challengeAtTop: Challenge?
     /// Reopens the challenge, to answer it or show its confirmation.
     var onShowChallenge: () -> Void = {}
+    /// Hides an answered challenge from the top.
+    var onHideChallenge: () -> Void = {}
 
     var body: some View {
         List {
@@ -194,9 +203,10 @@ struct QuestProgressList: View {
             }
             // The puzzle master's challenge comes first: the players may be
             // at a venue, with its staff, waiting on it.
-            if let challenge = quest.entry.challenge {
+            if let challenge = challengeAtTop {
                 Section {
-                    ChallengeRow(challenge: challenge, onOpen: onShowChallenge)
+                    ChallengeRow(
+                        challenge: challenge, onOpen: onShowChallenge, onHide: onHideChallenge)
                 }
             }
             Section {
