@@ -315,7 +315,9 @@ confirmation; on a new quest, see notifications offered and say Not now,
 which lasts after the app starts again (skipped once the simulator has
 answered iOS's question, which it remembers between runs), and turn them on,
 allowing them in iOS's prompt, after which the puzzle master can reach the
-player, who has no phone number, and the message pops up; and see a reset make the quest no longer
+player, who has no phone number, and the message pops up (the phone's token
+is the test's own, `PQ_FAKE_PUSH_TOKEN`, which a debug build takes in place of
+Apple's, since a simulator on CI can't get one from Apple); and see a reset make the quest no longer
 available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked

@@ -265,6 +265,9 @@ extension XCUIApplication {
             "PQ_SIGNED_OUT": "1", "PQ_RESET_SERVER": "1",
             // Shows the home screen's live-update state to the tests.
             "PQ_UI_TESTING": "1",
+            // A phone's token for push notifications, in place of Apple's,
+            // which a simulator on CI can't get; one for each launch.
+            "PQ_FAKE_PUSH_TOKEN": TestServer.unique("token"),
         ]
         app.launch()
         return app

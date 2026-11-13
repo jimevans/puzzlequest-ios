@@ -7,7 +7,22 @@ import UserNotifications
 /// with Apple, a notification arriving while the app is open, and a
 /// notification tapped. The registrar it holds is what the screens use.
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
-    let push = PushRegistrar(system: SystemNotifications())
+    lazy var push = PushRegistrar(
+        system: SystemNotifications(register: { [weak self] in self?.registerWithApple() }))
+
+    /// Asks Apple for the phone's token, which arrives below.
+    private func registerWithApple() {
+        #if DEBUG
+            // For the UI tests only: a simulator can't always get a token
+            // from Apple (CI's can't), so a test can give one, and test
+            // everything after it.
+            if let token = ProcessInfo.processInfo.environment["PQ_FAKE_PUSH_TOKEN"] {
+                push.received(deviceToken: Data(token.utf8))
+                return
+            }
+        #endif
+        UIApplication.shared.registerForRemoteNotifications()
+    }
 
     func application(
         _ application: UIApplication,
@@ -62,6 +77,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 /// iOS's notification permission and registration, as the registrar uses
 /// them.
 struct SystemNotifications: NotificationSystem {
+    /// Asks Apple for the phone's token, through the app delegate.
+    let register: @MainActor () -> Void
+
     func permission() async -> NotificationPermission {
         switch await UNUserNotificationCenter.current().notificationSettings().authorizationStatus {
         case .notDetermined: .notAsked
@@ -77,7 +95,7 @@ struct SystemNotifications: NotificationSystem {
     }
 
     func registerForRemoteNotifications() {
-        UIApplication.shared.registerForRemoteNotifications()
+        register()
     }
 }
 

@@ -4,7 +4,9 @@ import XCTest
 /// server started by scripts/start-test-server.sh (see TestServer). iOS asks
 /// a player once per install, and the simulator remembers the answer between
 /// runs, so the offer is checked only while iOS hasn't asked yet; these run
-/// in name order, so the offer is checked first.
+/// in name order, so the offer is checked first. The phone's token is the
+/// test's own (PQ_FAKE_PUSH_TOKEN), since a simulator on CI can't get one
+/// from Apple; that Apple gives one, and delivers, is checked on a phone.
 final class NotificationUITests: XCTestCase {
     private var server: TestServer!
 
