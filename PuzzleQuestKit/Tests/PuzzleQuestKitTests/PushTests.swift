@@ -142,7 +142,7 @@ struct PushRegistrarTests {
         defaults.removePersistentDomain(forName: suite)
     }
 
-    @Test("The token is registered with the session once, again when it or the server changes")
+    @Test("The token is registered with the session once, again when it, the server, or the session changes")
     func registering() async throws {
         let transport = FakeTransport { _ in json(204, "") }
         let api = api(transport, tokens: InMemoryTokenStore(token: "t"))
@@ -166,6 +166,12 @@ struct PushRegistrarTests {
         push.received(deviceToken: Data([0x0b]))
         await push.register(with: api)
         #expect(transport.requests.count == 2)
+
+        // Signed out and in again: the same token and server, but a new
+        // session, which needs it too.
+        push.forgetRegistration()
+        await push.register(with: api)
+        #expect(transport.requests.count == 3)
         defaults.removePersistentDomain(forName: suite)
     }
 

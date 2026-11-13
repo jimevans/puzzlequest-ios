@@ -87,8 +87,8 @@ public protocol NotificationSystem {
 /// Gets the player's notifications to this phone: asks for permission when
 /// the player chooses to, on a quest (never right after signing in), and
 /// registers the phone's token with their session on each launch, since
-/// tokens change. Signing out ends the session, and its notifications with
-/// it. Tracks the quest on screen, whose notifications aren't shown, since
+/// tokens change, and on each sign-in. Signing out ends the session, and its
+/// notifications with it. Tracks the quest on screen, whose notifications aren't shown, since
 /// live updates have already shown what changed, and the quest a tapped
 /// notification should open.
 @MainActor
@@ -167,6 +167,13 @@ public final class PushRegistrar {
             try await api.setPushTarget(token: deviceToken, environment: environment)
             registered = (deviceToken, api.server)
         } catch {}
+    }
+
+    /// The session has ended (signed out, or ended by the server): the next
+    /// one needs the phone registered too, even with the same token and
+    /// server, since ending a session ends its notifications.
+    public func forgetRegistration() {
+        registered = nil
     }
 
     /// Whether to show a notification that arrives while the app is open:
