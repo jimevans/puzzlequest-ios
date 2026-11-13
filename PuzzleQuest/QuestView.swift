@@ -11,6 +11,7 @@ struct QuestView: View {
     private let api: APIClient
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
+    @Environment(PushRegistrar.self) private var push
     @State private var model: QuestModel
     @State private var wasInBackground = false
 
@@ -27,6 +28,12 @@ struct QuestView: View {
             .navigationDestination(for: StopRoute.self) { route in
                 StopDetailView(model: model, puzzleName: route.puzzleName)
             }
+            .navigationDestination(for: MessagesRoute.self) { _ in
+                MessagesHistoryView(model: model)
+            }
+            .navigationDestination(for: ChallengeRoute.self) { route in
+                ChallengeDetailView(model: model, sentAt: route.sentAt)
+            }
             .navigationDestination(for: PuzzleRoute.self) { puzzle in
                 PuzzleView(questName: route.questName, route: puzzle, api: api)
             }
@@ -35,6 +42,12 @@ struct QuestView: View {
             #endif
             .task { await model.load() }
             .task(id: model.followGeneration) { await model.followLiveUpdates() }
+            // While it's on screen, its notifications aren't shown: its live
+            // updates show what changed.
+            .onAppear { push.questOnScreen = route.questName }
+            .onDisappear {
+                if push.questOnScreen == route.questName { push.questOnScreen = nil }
+            }
             .onChange(of: scenePhase) { _, phase in
                 switch phase {
                 case .background:
@@ -59,11 +72,37 @@ struct QuestView: View {
             }
     }
 
+    /// Whether the puzzle master's messages are shown over the screen;
+    /// swiping them away puts them away, as Done does.
+    private var messageSheetShown: Binding<Bool> {
+        Binding(
+            get: { model.messageSheet != nil },
+            set: { shown in
+                if !shown { model.dismissMessages() }
+            })
+    }
+
     @ViewBuilder
     private var content: some View {
         if let quest = model.quest {
-            QuestProgressList(quest: quest, standings: model.standings)
-                .refreshable { await model.load() }
+            QuestProgressList(
+                quest: quest, standings: model.standings,
+                offersNotifications: push.offers(onQuest: quest.questName),
+                challengeAtTop: model.challengeAtTop,
+                onShowChallenge: { model.showChallenge() },
+                onHideChallenge: { model.hideAnsweredChallenge() }
+            )
+            .refreshable { await model.load() }
+            .sheet(isPresented: messageSheetShown) {
+                if let sheet = model.messageSheet {
+                    MessageSheetView(
+                        sheet: sheet, entry: quest.entry,
+                        answering: ChallengeAnswering(
+                            isPending: model.answeringChallenge, error: model.challengeError,
+                            answer: { await model.answerChallenge($0) }),
+                        onDone: { model.dismissMessages() })
+                }
+            }
         } else if model.notAvailable {
             ContentUnavailableView {
                 Label("Quest not available", systemImage: "map")
@@ -112,6 +151,12 @@ struct QuestView: View {
                 localized:
                     "Final standings: \(winners.map(StandingsSection.name(of:)).formatted(.list(type: .and))) won."
             )
+        case .messageReceived(let text, let isChallenge):
+            isChallenge
+                ? String(localized: "A challenge from the puzzle master: \(text)")
+                : String(localized: "From the puzzle master: \(text)")
+        case .challengeAnswered:
+            String(localized: "The challenge is answered. Show the confirmation to the staff.")
         }
     }
 
@@ -142,6 +187,14 @@ struct StopRoute: Hashable {
 struct QuestProgressList: View {
     let quest: PlayerQuest
     let standings: Standings?
+    /// Whether to offer turning notifications on, above everything else.
+    var offersNotifications = false
+    /// The challenge kept at the top: waiting, or answered and not hidden.
+    var challengeAtTop: Challenge?
+    /// Reopens the challenge, to answer it or show its confirmation.
+    var onShowChallenge: () -> Void = {}
+    /// Hides an answered challenge from the top.
+    var onHideChallenge: () -> Void = {}
 
     var body: some View {
         List {
@@ -156,6 +209,19 @@ struct QuestProgressList: View {
                     .foregroundStyle(.orange)
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("quest.paused")
+                }
+            }
+            if offersNotifications {
+                Section {
+                    NotificationsCard(questName: quest.questName)
+                }
+            }
+            // The puzzle master's challenge comes first: the players may be
+            // at a venue, with its staff, waiting on it.
+            if let challenge = challengeAtTop {
+                Section {
+                    ChallengeRow(
+                        challenge: challenge, onOpen: onShowChallenge, onHide: onHideChallenge)
                 }
             }
             Section {
@@ -188,6 +254,16 @@ struct QuestProgressList: View {
                         }
                         .accessibilityIdentifier("quest.solved.\(stop.puzzleName)")
                     }
+                }
+            }
+            if !quest.entry.messages.isEmpty {
+                Section {
+                    NavigationLink(value: MessagesRoute()) {
+                        LabeledContent("From the puzzle master") {
+                            Text(quest.entry.messages.count, format: .number)
+                        }
+                    }
+                    .accessibilityIdentifier("quest.messages-row")
                 }
             }
         }

@@ -23,9 +23,10 @@ public enum LiveUpdate: Equatable, Sendable {
     /// The user's list of quests should be fetched again, as when one of them
     /// starts.
     case questsChanged
-    /// An entry's progress in a quest changed (a stop was activated, started
-    /// or solved, a hint revealed, or something the follower may not be told
-    /// about while racing); `message` is which, as the API names it.
+    /// An entry in a quest changed (a stop was activated, started or solved,
+    /// a hint revealed, the puzzle master sent a message or a challenge was
+    /// answered, or something the follower may not be told about while
+    /// racing); `message` is which, as the API names it.
     case questChanged(message: String, questName: String, entryId: String)
 }
 
@@ -225,7 +226,10 @@ public struct LiveUpdateFollower: Sendable {
     }()
 
     /// Reads a message from the server, or nil for one this version of the
-    /// app doesn't know (version 1 may add messages) or can't read.
+    /// app doesn't know (version 1 may add messages) or can't read. The
+    /// generated cases are numbered in the order the API's description lists
+    /// the messages, which can change when it gains one: a new pinned
+    /// version makes this switch fail to compile until each is checked.
     static func message(from text: String) -> Message? {
         guard
             let update = try? decoder.decode(
@@ -259,7 +263,17 @@ public struct LiveUpdateFollower: Sendable {
                 .questChanged(
                     message: updated.message.rawValue, questName: updated.questName,
                     entryId: updated.entryId))
-        case .case7:
+        case .case7(let sent):
+            return .update(
+                .questChanged(
+                    message: sent.message.rawValue, questName: sent.questName,
+                    entryId: sent.entryId))
+        case .case8(let answered):
+            return .update(
+                .questChanged(
+                    message: answered.message.rawValue, questName: answered.questName,
+                    entryId: answered.entryId))
+        case .case9:
             return .update(.questsChanged)
         }
     }

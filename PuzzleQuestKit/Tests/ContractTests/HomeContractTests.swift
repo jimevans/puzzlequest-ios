@@ -117,6 +117,38 @@ enum TestSite {
             questName: questName, puzzleName: stop.puzzleName, guess: "piano", connectionId: nil)
     }
 
+    /// Registers a phone for the player's push notifications, so the puzzle
+    /// master's messages can reach them without a phone number. The test
+    /// server has no Apple or Firebase settings, so nothing is sent to it.
+    static func registerPhone(_ player: APIClient) async throws {
+        let output = try await player.client.setPushTarget(
+            body: .json(
+                .init(
+                    platform: .init(value1: .ios), token: unique("phone"),
+                    environment: .init(value1: .development))))
+        guard case .noContent = output else {
+            throw APIError.unexpectedResponse("setPushTarget: \(output)")
+        }
+    }
+
+    /// As the puzzle master, sends the player a challenge whose answer is
+    /// "lighthouse", and whose confirmation is "Show this to the bartender".
+    /// The player needs a registered phone (`registerPhone`) to be reached.
+    static func sendChallenge(
+        _ questName: String, to player: String, message: String = "What lights the harbour?",
+        admin: APIClient
+    ) async throws {
+        let output = try await admin.client.sendPlayerTextMessage(
+            path: .init(questName: questName, userName: player),
+            body: .json(
+                .init(
+                    message: message, expectedResponse: "lighthouse",
+                    responseConfirmation: "Show this to the bartender")))
+        guard case .noContent = output else {
+            throw APIError.unexpectedResponse("sendPlayerTextMessage: \(output)")
+        }
+    }
+
     static func reset(_ questName: String, admin: APIClient) async throws {
         let output = try await admin.client.resetQuest(path: .init(questName: questName))
         guard case .ok = output else {

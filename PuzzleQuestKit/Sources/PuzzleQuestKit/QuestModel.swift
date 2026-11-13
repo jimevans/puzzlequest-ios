@@ -29,9 +29,21 @@ public final class QuestModel {
     /// Changes each time following should start again on a new connection;
     /// the screen restarts its following task when it does (`.task(id:)`).
     public private(set) var followGeneration = 0
+    /// True while the player's answer to the challenge is being sent.
+    public private(set) var answeringChallenge = false
+    /// Why the player's last answer to the challenge didn't succeed, if it
+    /// didn't.
+    public private(set) var challengeError: ChallengeAnswerError?
+    /// The puzzle master's messages to show over the quest screen, if any:
+    /// those this phone hasn't shown yet, or the challenge reopened.
+    public private(set) var messageSheet: MessageSheet?
+    /// The answered challenge the player hid from the quest screen, by its
+    /// `Challenge.id`.
+    private var hiddenChallenge: String?
 
     private let api: APIClient
     private let follower: LiveUpdateFollower
+    private let messagesSeen: any MessagesSeen
     /// Fetches can overlap; only the latest one's answer is kept.
     private var latestFetch = 0
 
@@ -41,10 +53,12 @@ public final class QuestModel {
 
     package init(
         questName: String, api: APIClient, connector: any LiveSocketConnector,
+        messagesSeen: any MessagesSeen = UserDefaultsMessagesSeen(),
         configure: (inout LiveUpdateFollower) -> Void = { _ in }
     ) {
         self.questName = questName
         self.api = api
+        self.messagesSeen = messagesSeen
         var follower = LiveUpdateFollower(
             url: api.liveUpdatesURL, channel: .quest(questName: questName),
             connector: connector,
@@ -79,6 +93,81 @@ public final class QuestModel {
         }
     }
 
+    /// Answers the challenge the player's entry is waiting for. However it
+    /// turns out, the quest is fetched again: a right answer shows the
+    /// confirmation, and a refusal often means a teammate answered first.
+    /// - Returns: whether the answer was right.
+    @discardableResult
+    public func answerChallenge(_ answer: String) async -> Bool {
+        guard !answeringChallenge else { return false }
+        answeringChallenge = true
+        challengeError = nil
+        defer { answeringChallenge = false }
+        var right = true
+        do throws(APIError) {
+            _ = try await api.answerChallenge(questName: questName, answer: answer)
+        } catch {
+            right = false
+            challengeError = ChallengeAnswerError(error)
+        }
+        await fetch()
+        return right
+    }
+
+    /// Shows the challenge again, waiting or answered, as from the row at
+    /// the top of the quest screen.
+    public func showChallenge() {
+        guard quest?.entry.challenge != nil else { return }
+        messageSheet = MessageSheet(messages: [], showsChallenge: true)
+    }
+
+    /// The challenge to keep at the top of the quest screen: one waiting for
+    /// its answer, or answered and not yet hidden.
+    public var challengeAtTop: Challenge? {
+        guard let challenge = quest?.entry.challenge else { return nil }
+        return challenge.answer != nil && challenge.id == hiddenChallenge ? nil : challenge
+    }
+
+    /// Takes an answered challenge off the quest screen for good on this
+    /// phone; it's still in the puzzle master's messages. A waiting one stays.
+    public func hideAnsweredChallenge() {
+        guard let challenge = quest?.entry.challenge, challenge.answer != nil,
+            let entryId = quest?.entry.id
+        else { return }
+        messagesSeen.hideChallenge(challenge.id, entryId: entryId)
+        hiddenChallenge = challenge.id
+    }
+
+    /// Puts the messages away, recording them as shown on this phone.
+    public func dismissMessages() {
+        if let sheet = messageSheet, let entryId = quest?.entry.id {
+            messagesSeen.markSeen(sheet.messages.map(\.id), entryId: entryId)
+        }
+        messageSheet = nil
+        challengeError = nil
+    }
+
+    /// Shows the messages this phone hasn't shown yet, newest first, adding
+    /// any that arrive while they're shown. A challenge among them is shown
+    /// first, to answer.
+    private func showUnseenMessages(_ quest: PlayerQuest) {
+        let seen = messagesSeen.seen(entryId: quest.entry.id)
+        let shown = Set(messageSheet?.messages.map(\.id) ?? [])
+        let unseen = quest.entry.messages.filter { !seen.contains($0.id) }
+        guard unseen.contains(where: { !shown.contains($0.id) }) else { return }
+        let challengeIsNew =
+            quest.entry.challenge.map { challenge in unseen.contains(where: challenge.isSet(by:)) }
+            ?? false
+        messageSheet = MessageSheet(
+            messages: unseen.reversed(),
+            showsChallenge: challengeIsNew || messageSheet?.showsChallenge == true)
+    }
+
+    /// Clears the message about the last answer, as when the player edits it.
+    public func clearChallengeError() {
+        challengeError = nil
+    }
+
     /// Back in the foreground: follows again on a new connection, and fetches.
     public func returnedToForeground() async {
         isLive = false
@@ -111,6 +200,8 @@ public final class QuestModel {
             }
             notAvailable = false
             quest = fetched
+            hiddenChallenge = messagesSeen.hiddenChallenge(entryId: fetched.entry.id)
+            showUnseenMessages(fetched)
             if let fetchedStandings {
                 // A quest one player or team played has no standings to show.
                 let shown = fetchedStandings.entries.count >= 2 ? fetchedStandings : nil
@@ -128,6 +219,49 @@ public final class QuestModel {
         } catch {
             guard fetch == latestFetch else { return }
             loadFailed = true
+        }
+    }
+}
+
+/// The puzzle master's messages shown over the quest screen.
+public struct MessageSheet: Equatable, Sendable {
+    /// The messages to show, newest first; those not shown before, or none
+    /// when the challenge is reopened.
+    public var messages: [PuzzleMasterMessage]
+    /// Whether the entry's challenge is shown, to answer or, once answered,
+    /// with its confirmation.
+    public var showsChallenge: Bool
+
+    public init(messages: [PuzzleMasterMessage], showsChallenge: Bool) {
+        self.messages = messages
+        self.showsChallenge = showsChallenge
+    }
+}
+
+/// Why a player's answer to a challenge didn't succeed.
+public enum ChallengeAnswerError: Equatable, Sendable {
+    case wrongAnswer
+    /// Too many tries in a short time.
+    case tooManyAttempts
+    /// No challenge is waiting any more: a teammate answered it first, or the
+    /// quest changed; the screen now shows where it stands.
+    case changed
+    case unreachable
+    case unexpected
+
+    init(_ error: APIError) {
+        switch error {
+        case .problem(let problem):
+            switch problem.type {
+            case Problem.Types.wrongAnswer: self = .wrongAnswer
+            case Problem.Types.tooManyRequests: self = .tooManyAttempts
+            case Problem.Types.wrongState: self = .changed
+            default: self = [403, 404].contains(problem.status) ? .changed : .unexpected
+            }
+        case .unreachable:
+            self = .unreachable
+        case .unexpectedResponse:
+            self = .unexpected
         }
     }
 }

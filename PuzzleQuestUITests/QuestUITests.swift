@@ -54,6 +54,67 @@ final class QuestUITests: XCTestCase {
     }
 
     @MainActor
+    func testAChallengeArrivesAsItIsSentAndARightAnswerShowsTheConfirmation() async throws {
+        let player = try await server.newPlayer()
+        let admin = try await server.adminToken()
+        let quest = try await server.makeQuest(for: player, admin: admin)
+        try await server.start(quest.questName, admin: admin)
+
+        let app = openQuest(quest.questName, as: player)
+        try await server.sendChallenge(
+            quest.questName, to: player, message: "What lights the harbour?", admin: admin)
+        // It pops up over the quest screen, to answer there.
+        let message = app.element("quest.challenge.message")
+        XCTAssertTrue(message.waitForExistence(timeout: 15), "the challenge didn't show")
+        XCTAssertEqual(message.label, "What lights the harbour?")
+
+        let field = app.textFields["quest.challenge.answer"]
+        field.typeWhenFocused("an organ")
+        app.buttons["quest.challenge.answer.send"].tapWhenHittable()
+        let error = app.element("quest.challenge.error")
+        XCTAssertTrue(error.waitForExistence(timeout: 15), "the wrong answer wasn't refused")
+        XCTAssertTrue(error.label.contains("not the answer"), "it says \(error.label)")
+
+        // Keywords, as puzzle answers: other words around it are fine.
+        let typed = (field.value as? String) ?? ""
+        field.typeWhenFocused(
+            String(repeating: XCUIKeyboardKey.delete.rawValue, count: typed.count)
+                + "It's the Lighthouse!")
+        app.buttons["quest.challenge.answer.send"].tapWhenHittable()
+        let confirmation = app.element("quest.challenge.confirmation")
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 15), "the confirmation didn't show")
+        XCTAssertEqual(confirmation.label, "Show this to the bartender")
+        XCTAssertTrue(
+            app.element("quest.challenge.answered").label.contains("Show this to the staff"))
+        XCTAssertFalse(field.exists, "it still asks for an answer")
+
+        // Put away, a row brings the confirmation back for the staff.
+        app.buttons["quest.messages.done"].tapWhenHittable()
+        XCTAssertTrue(
+            confirmation.waitForNonExistence(timeout: 15), "the confirmation wasn't put away")
+        let row = app.buttons["quest.challenge-row"]
+        XCTAssertTrue(row.waitForExistence(timeout: 15), "there's no row for the challenge")
+        XCTAssertTrue(row.label.contains("Challenge answered"), "the row is \(row.label)")
+        row.tapWhenHittable()
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 15), "the row didn't reopen it")
+        app.buttons["quest.messages.done"].tapWhenHittable()
+
+        // Hidden, the row is gone for good.
+        app.buttons["quest.challenge-row.hide"].tapWhenHittable()
+        XCTAssertTrue(row.waitForNonExistence(timeout: 15), "the row wasn't hidden")
+
+        // The challenge is in the history, and opens to its confirmation.
+        app.element("quest.messages-row").tapWhenHittable()
+        let entry = app.buttons.containing(
+            NSPredicate(format: "label CONTAINS 'What lights the harbour?'")
+        ).firstMatch
+        XCTAssertTrue(entry.waitForExistence(timeout: 15), "the challenge isn't in the history")
+        entry.tapWhenHittable()
+        XCTAssertTrue(
+            confirmation.waitForExistence(timeout: 15), "the challenge didn't open to its confirmation")
+    }
+
+    @MainActor
     func testFinishingARaceShowsTheFinishTheSolutionAndTheStandings() async throws {
         let player = try await server.newPlayer()
         let rival = try await server.newPlayer()

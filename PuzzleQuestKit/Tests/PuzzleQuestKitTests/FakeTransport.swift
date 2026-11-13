@@ -36,6 +36,9 @@ final class FakeTransport: ClientTransport {
     }
 }
 
+/// A response the fake transport gives: its head, and its body if any.
+typealias HTTPAnswer = (HTTPResponse, HTTPBody?)
+
 /// A response with a JSON body.
 func json(_ status: Int, _ body: String, contentType: String = "application/json") -> (
     HTTPResponse, HTTPBody?

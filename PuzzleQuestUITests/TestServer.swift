@@ -220,6 +220,37 @@ struct TestServer {
     func start(_ questName: String, admin token: String) async throws {
         try await call("POST", "quests/\(questName)/start", token: token)
     }
+
+    /// As the puzzle master, sends the player a message, without registering
+    /// a phone for them: refused (no recipients) unless they can be reached.
+    func sendMessage(
+        _ questName: String, to player: String, message: String, admin token: String
+    ) async throws {
+        try await call(
+            "POST", "quests/\(questName)/players/\(player)/text-messages", token: token,
+            body: ["message": message])
+    }
+
+    /// As the puzzle master, sends the player a challenge whose answer is
+    /// "lighthouse", and whose confirmation is "Show this to the bartender".
+    /// It first registers a phone for the player on another session of
+    /// theirs, since only players with the app or a phone number to text can
+    /// be sent one; the test server sends nothing to it.
+    func sendChallenge(
+        _ questName: String, to player: String, message: String, admin token: String
+    ) async throws {
+        try await call(
+            "PUT", "sessions/current/push-target", token: try await self.token(for: player),
+            body: [
+                "platform": "ios", "token": Self.unique("phone"), "environment": "development",
+            ])
+        try await call(
+            "POST", "quests/\(questName)/players/\(player)/text-messages", token: token,
+            body: [
+                "message": message, "expectedResponse": "lighthouse",
+                "responseConfirmation": "Show this to the bartender",
+            ])
+    }
 }
 
 extension XCUIApplication {
@@ -234,6 +265,9 @@ extension XCUIApplication {
             "PQ_SIGNED_OUT": "1", "PQ_RESET_SERVER": "1",
             // Shows the home screen's live-update state to the tests.
             "PQ_UI_TESTING": "1",
+            // A phone's token for push notifications, in place of Apple's,
+            // which a simulator on CI can't get; one for each launch.
+            "PQ_FAKE_PUSH_TOKEN": TestServer.unique("token"),
         ]
         app.launch()
         return app

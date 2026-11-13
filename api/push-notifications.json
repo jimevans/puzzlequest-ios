@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "questStarted",
+        "questPaused",
+        "questResumed",
+        "stopSolved",
+        "standingsFinal",
+        "message"
+      ]
+    },
+    "questName": {
+      "type": "string"
+    },
+    "puzzleName": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "string"
+    }
+  },
+  "required": ["category", "questName", "title", "body"]
+}

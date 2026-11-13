@@ -203,6 +203,46 @@
         "properties": {
           "message": {
             "type": "string",
+            "const": "messageSent"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "const": "challengeAnswered"
+          },
+          "questName": {
+            "type": "string"
+          },
+          "entryId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "questName",
+          "entryId"
+        ]
+      },
+      {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
             "const": "questsChanged"
           }
         },

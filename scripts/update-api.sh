@@ -1,7 +1,7 @@
 #!/bin/bash
 # Pins the app to a release of the PuzzleQuest API: downloads the release's
-# description (openapi.json) and live-update messages (live-updates.json) into
-# api/, records the tag in api/VERSION, and writes the copy the client is
+# description (openapi.json), live-update messages (live-updates.json), and,
+# from 1.1, what push notifications carry (push-notifications.json) into api/, records the tag in api/VERSION, and writes the copy the client is
 # generated from (see scripts/tolerant-openapi.jq for what it changes).
 #
 #   scripts/update-api.sh v1.0.1     # move to that release
@@ -23,9 +23,13 @@ fi
 if [[ $# -eq 1 ]]; then
   download=$(mktemp -d)
   trap 'rm -rf "$download"' EXIT
-  gh release download "$1" --repo "$REPOSITORY" \
-    --pattern openapi.json --pattern live-updates.json --dir "$download"
+  gh release download "$1" --repo "$REPOSITORY" --pattern openapi.json \
+    --pattern live-updates.json --pattern push-notifications.json --dir "$download"
   mv "$download/openapi.json" "$download/live-updates.json" "$API/"
+  # Releases before 1.1 have no push notifications.
+  if [[ -f "$download/push-notifications.json" ]]; then
+    mv "$download/push-notifications.json" "$API/"
+  fi
   echo "$1" > "$API/VERSION"
 fi
 

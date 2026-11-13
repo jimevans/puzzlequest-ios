@@ -121,7 +121,8 @@ server's origin could be accepted alongside the allowlist (see
 - `Config/`: the debug build's Info.plist additions: it allows plain HTTP, to
   any server.
 - `api/`: the pinned API release: its description (`openapi.json`), its
-  live-update messages (`live-updates.json`), and its tag (`VERSION`).
+  live-update messages (`live-updates.json`), what its push notifications
+  carry (`push-notifications.json`, from 1.1), and its tag (`VERSION`).
 - `scripts/`: moving to a new API release, and running the test server.
 
 ## The API and moving to a new release
@@ -173,7 +174,31 @@ connection's id with the player's own actions, so the server doesn't send it
 their updates: it fetches the puzzle again after each action itself. Starting
 and resetting a quest reach its followers too (since API 1.0.2), so a quest
 reset while its quest or puzzle screen is open shows as no longer available at
-once.
+once. So do the puzzle master's messages and a challenge being answered (since
+API 1.1), so a challenge appears on the quest screen as it's sent, and its
+confirmation on every teammate's screen as soon as one of them answers it.
+New messages pop up in a sheet once on each phone (which ones it has shown are
+kept in `UserDefaults`), including those that came while the app was closed; a
+challenge is answered there, and a row at the top of the quest screen reopens
+it, or its confirmation; an answered one's row can be hidden for good (also
+kept in `UserDefaults`). A challenge's entry in the messages opens it: the
+latest to answer or with its confirmation, an earlier one as it was asked.
+
+Push notifications (API 1.1, server decisions 0024 and 0025): the first time
+a player opens a quest, a card offers them, saying what they're for; Turn on
+asks iOS (once per install), and Not now stops offering on that quest
+(remembered in `UserDefaults`). Once allowed, the app asks Apple for the
+phone's token on every launch and registers it with the signed-in session
+(`PUT /sessions/current/push-target`), with every kind; signing out ends the
+session and its notifications. Registered, the player counts as having the
+app, so the puzzle master's messages aren't texted to them unless the quest
+says to. A notification about the quest on screen isn't shown, since its live
+updates show the change; tapping one opens its quest. The app has the Push
+Notifications capability (`Config/PuzzleQuest.entitlements`); a build from
+Xcode registers with Apple's sandbox (`development`), read from the app's
+provisioning profile, and one from the App Store or TestFlight with
+production. Real delivery needs the server's Apple settings, and is checked
+by hand on a phone.
 
 ## Tests
 
@@ -188,7 +213,14 @@ reading newer responses, explaining errors, restoring and ending sessions
 against a fake network, the Keychain, following live updates over a fake
 websocket, fetching every page of a list, a quest's clock, the home screen's
 model and email reminder, reading a player's quest and a race's standings,
-what's announced as a quest changes, the quest screen's model, reading a
+what's announced as a quest changes (the puzzle master's messages and an
+answered challenge included), the quest screen's model (answering the
+challenge, rightly, wrongly, and after a teammate; new messages shown once,
+the challenge reopened, and an answered one hidden from the top for good),
+remembering which messages were shown and which challenge was hidden, reading a
+push notification (every kind the pinned `push-notifications.json` lists),
+which of Apple's services the app is for, offering notifications and
+registering the phone's token (once per token and server), reading a
 puzzle (its media on the site) and what's announced as it changes, telling
 refusals apart by their problem types, the puzzle screen's model (activating,
 a code left in front of the camera sent only once, guessing, hints, the
@@ -240,7 +272,11 @@ get live tickets; follow the player's quests over the real websocket and hear
 of a quest starting; fetch a quest as its player before and after it starts,
 solve its stop (finding the activation code as the administrator) and see it
 finished with its solution, see a two-player race's standings provisional and
-then final, find a reset quest no longer available, and hear of the player's
+then final, register a phone with the app's own call and so be reachable by
+the puzzle master without a phone number, receive a challenge from the puzzle master (with a phone
+registered for the player, so it can reach them) and have a wrong answer
+refused, a right one in other words accepted with its confirmation, and a
+second answer refused, find a reset quest no longer available, and hear of the player's
 own progress over the quest's websocket; see a puzzle waiting to be found
 show nothing of itself, have a wrong code refused and the right one accepted
 in any letter case, reveal a hint and see its penalty and the next one's
@@ -271,7 +307,18 @@ email again. On the quest screen they see the current stop, and the quest
 paused and resumed as the administrator does it; finish a race (both players
 solving through the API while the screen is open) and see the finish, the
 final standings with the player's own entry marked, and the solved stop's
-solution; and see a reset make the quest no longer available as it happens. On the puzzle screen they type a wrong code and then the right one
+solution; see a challenge from the puzzle master pop up as it's sent, answer
+it wrongly and then rightly (in other words around its keyword), see the
+confirmation to show the staff, put it away and bring it back from the row at
+the top, hide the row, and open the challenge from the history to its
+confirmation; on a new quest, see notifications offered and say Not now,
+which lasts after the app starts again (skipped once the simulator has
+answered iOS's question, which it remembers between runs), and turn them on,
+allowing them in iOS's prompt, after which the puzzle master can reach the
+player, who has no phone number, and the message pops up (the phone's token
+is the test's own, `PQ_FAKE_PUSH_TOKEN`, which a debug build takes in place of
+Apple's, since a simulator on CI can't get one from Apple); and see a reset make the quest no longer
+available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked
 before the hint that gives the solution away, answer wrongly and then rightly,

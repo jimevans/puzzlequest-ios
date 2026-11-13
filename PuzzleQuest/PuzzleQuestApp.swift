@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct PuzzleQuestApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var connection = AppServer.connect()
 
     var body: some Scene {
@@ -15,6 +16,7 @@ struct PuzzleQuestApp: App {
                 .id(connection.server)
                 .environment(connection)
                 .environment(connection.session)
+                .environment(appDelegate.push)
                 // VoiceOver hears which server is now in use.
                 .onChange(of: connection.server) { _, server in
                     AccessibilityNotification.Announcement(

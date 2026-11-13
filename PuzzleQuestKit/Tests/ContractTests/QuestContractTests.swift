@@ -75,6 +75,68 @@ struct QuestContractTests {
         #expect(final.entries.map(\.rank) == [1, 2])
     }
 
+    @Test("A challenge from the puzzle master shows; a wrong answer is refused, a right one shows the confirmation")
+    func challenge() async throws {
+        let (player, api) = try await TestSite.newPlayer()
+        let admin = try await TestSite.admin()
+        let questName = try await TestSite.makeQuest(for: player, admin: admin)
+        try await TestSite.start(questName, admin: admin)
+        try await TestSite.registerPhone(api)
+        try await TestSite.sendChallenge(questName, to: player, admin: admin)
+
+        let quest = try #require(try await api.playerQuest(questName: questName))
+        #expect(quest.entry.messages.map(\.text) == ["What lights the harbour?"])
+        #expect(quest.entry.messages.first?.isChallenge == true)
+        let challenge = try #require(quest.entry.waitingChallenge)
+        #expect(challenge.message == "What lights the harbour?")
+
+        do {
+            _ = try await api.answerChallenge(questName: questName, answer: "an organ")
+            Issue.record("a wrong answer was accepted")
+        } catch {
+            #expect(ChallengeAnswerError(error) == .wrongAnswer)
+        }
+        // Keywords, as puzzle answers: any letter case, with other words.
+        let answered = try await api.answerChallenge(
+            questName: questName, answer: "It's the LIGHTHOUSE!")
+        #expect(answered.confirmation == "Show this to the bartender")
+
+        let after = try #require(try await api.playerQuest(questName: questName))
+        let answer = try #require(after.entry.challenge?.answer)
+        #expect(answer.confirmation == "Show this to the bartender")
+        #expect(!answer.byText)
+        do {
+            _ = try await api.answerChallenge(questName: questName, answer: "lighthouse")
+            Issue.record("an answered challenge was answered again")
+        } catch {
+            #expect(ChallengeAnswerError(error) == .changed)
+        }
+    }
+
+    @Test("A player who can't be texted is reached by the puzzle master once their phone is registered")
+    func registeredPhone() async throws {
+        let (player, api) = try await TestSite.newPlayer()
+        let admin = try await TestSite.admin()
+        let questName = try await TestSite.makeQuest(for: player, admin: admin)
+        try await TestSite.start(questName, admin: admin)
+
+        // No phone number, and no app: no one to send it to.
+        do {
+            _ = try await admin.client.sendPlayerTextMessage(
+                path: .init(questName: questName, userName: player),
+                body: .json(.init(message: "Hello")))
+            Issue.record("a player with no way to be reached was sent a message")
+        } catch {
+            // The client's middleware turns the refusal into an error.
+            #expect("\(error)".contains("/problems/no-recipients"), "it was \(error)")
+        }
+
+        try await api.setPushTarget(token: TestSite.unique("phone"), environment: .development)
+        try await TestSite.sendChallenge(questName, to: player, admin: admin)
+        let quest = try #require(try await api.playerQuest(questName: questName))
+        #expect(quest.entry.waitingChallenge != nil)
+    }
+
     @Test("A quest reset by the puzzle master isn't available to its player")
     func reset() async throws {
         let (player, api) = try await TestSite.newPlayer()

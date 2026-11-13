@@ -29,6 +29,12 @@
     "%@, paused" : {
       "comment" : "In the race standings: an entry's status, when the puzzle master has paused it."
     },
+    "A challenge from the puzzle master" : {
+      "comment" : "Quest screen: heading of the puzzle master's challenge, above its question and the answer field."
+    },
+    "A challenge from the puzzle master: %@" : {
+      "comment" : "VoiceOver announcement when the puzzle master sends a challenge; the argument is its question."
+    },
     "A deleted player" : {
       "comment" : "In the race standings, in place of a player whose account has been deleted."
     },
@@ -53,6 +59,15 @@
     "Another PuzzleQuest server" : {
       "comment" : "Options: describes the Custom server choice."
     },
+    "Answer" : {
+      "comment" : "Quest screen, on the row for a waiting challenge: opens it to answer."
+    },
+    "Answered at %@" : {
+      "comment" : "Quest screen, on the confirmation of an answered challenge: when it was answered in the app; the argument is a time."
+    },
+    "Answered by text at %@" : {
+      "comment" : "Quest screen, on the confirmation of an answered challenge: when it was answered by text message; the argument is a time."
+    },
     "Back to the quest" : {
       "comment" : "Puzzle screen: button that returns to the quest screen."
     },
@@ -73,6 +88,15 @@
     },
     "Cancel" : {
       "comment" : "Options: keeps the server in use instead of switching."
+    },
+    "Challenge" : {
+      "comment" : "In the puzzle master's messages, in the sheet and the list: marks a message that set a challenge. Also the title of the screen showing one challenge."
+    },
+    "Challenge answered" : {
+      "comment" : "Quest screen: the row for the puzzle master's challenge once a player has answered it rightly."
+    },
+    "Challenge waiting" : {
+      "comment" : "Quest screen: the row for the puzzle master's challenge while it waits for an answer."
     },
     "Check answer" : {
       "comment" : "Puzzle screen: button that sends the player's guess at the solution."
@@ -119,7 +143,7 @@
       "comment" : "Options: heading of the section where a custom server's address is typed."
     },
     "Done" : {
-      "comment" : "Options: closes the Options screen."
+      "comment" : "Closes the Options screen, and the sheet of the puzzle master's messages on the quest screen."
     },
     "End of the line" : {
       "comment" : "Heading when the player has finished the quest (the quest's journey is over)."
@@ -148,8 +172,20 @@
     "Finished" : {
       "comment" : "In a stop's times: when it was solved."
     },
+    "From the puzzle master" : {
+      "comment" : "Quest screen: the row opening the list of messages the puzzle master sent, and the title of that list and of the sheet showing new ones."
+    },
+    "From the puzzle master: %@" : {
+      "comment" : "VoiceOver announcement when the puzzle master sends a message; the argument is the message."
+    },
+    "Get told when it matters" : {
+      "comment" : "Quest screen: heading of the card offering to turn notifications on."
+    },
     "Give away the solution?" : {
       "comment" : "Puzzle screen: title of the alert asking before revealing a hint that gives the solution away."
+    },
+    "Hide the answered challenge" : {
+      "comment" : "VoiceOver label of the ✕ on the quest screen's row for an answered challenge, which hides the row for good."
     },
     "Hint %lld" : {
       "comment" : "Puzzle screen: heading of a revealed hint; the number is its place in the order revealed."
@@ -192,11 +228,17 @@
     "New to PuzzleQuest? Sign up on the website" : {
       "comment" : "Link on the sign-in screen that opens the website, where people sign up."
     },
+    "Not now" : {
+      "comment" : "Quest screen, on the card offering notifications: stops offering them on this quest."
+    },
     "Not ranked yet" : {
       "comment" : "Spoken by VoiceOver for a dash in the standings: an entry that hasn't finished, so has no place."
     },
     "Not started" : {
       "comment" : "Spoken by VoiceOver for a dash in the standings: an entry that hasn't started, so has no time."
+    },
+    "Notifications tell you when the quest starts, when the puzzle master pauses it or sends you a challenge, when a teammate solves a stop, and how a race ends, even with the app closed. With them on, the puzzle master's messages usually aren't texted to you as well." : {
+      "comment" : "Quest screen: what the card offering notifications says they're for."
     },
     "Now using %@" : {
       "comment" : "VoiceOver announcement after switching servers; the argument is the server's name, such as staging.thepuzzlequest.com."
@@ -206,6 +248,9 @@
     },
     "Open %@" : {
       "comment" : "Link to the website on the staff and administrators' screen; the argument is the site's address, such as thepuzzlequest.com."
+    },
+    "Opens the challenge" : {
+      "comment" : "VoiceOver hint on a challenge in the list of the puzzle master's messages."
     },
     "Opens the puzzle" : {
       "comment" : "Quest screen: VoiceOver hint on the current stop, which opens its puzzle."
@@ -267,6 +312,9 @@
     "Scan the QR code instead" : {
       "comment" : "Puzzle screen: button that switches from typing the code to scanning the QR code."
     },
+    "Send the answer" : {
+      "comment" : "Quest screen: button sending the players' answer to the puzzle master's challenge."
+    },
     "Send the email again" : {
       "comment" : "Button that sends the email-verification email again."
     },
@@ -282,8 +330,14 @@
     "Server in use" : {
       "comment" : "Options: labels the name of the server the app uses now."
     },
+    "Show confirmation" : {
+      "comment" : "Quest screen, on the row for an answered challenge: opens its confirmation, to show the venue's staff."
+    },
     "Show it" : {
       "comment" : "Puzzle screen: alert button that reveals the hint giving the solution away."
+    },
+    "Show this to the staff" : {
+      "comment" : "Quest screen: heading of a challenge's confirmation, which the players show the venue's staff to be given what comes next."
     },
     "Sign in" : {
       "comment" : "Title of the sign-in screen, and its button."
@@ -389,6 +443,12 @@
     "The app checks it's a PuzzleQuest server before using it." : {
       "comment" : "Options (debug builds): explains what happens to a custom server's address."
     },
+    "The challenge" : {
+      "comment" : "Challenge screen: heading above the question of an answered challenge."
+    },
+    "The challenge is answered. Show the confirmation to the staff." : {
+      "comment" : "VoiceOver announcement when a player (perhaps a teammate) answers the challenge rightly."
+    },
     "The email has been sent several times lately. Wait a few minutes, then try again." : {
       "comment" : "The verification email can't be sent again yet (rate limited)."
     },
@@ -400,6 +460,9 @@
     },
     "The puzzle master has paused the quest. Try again once it resumes." : {
       "comment" : "Puzzle screen: an action was refused because the quest is paused."
+    },
+    "The puzzle master has sent another challenge since this one." : {
+      "comment" : "Challenge screen, opened from the messages: under an earlier challenge, which a later one replaced."
     },
     "The puzzle master may have reset it, or it may no longer be yours to play." : {
       "comment" : "Explains why a quest is no longer available."
@@ -415,6 +478,9 @@
     },
     "This app connects only to PuzzleQuest's own servers: thepuzzlequest.com and addresses ending in .thepuzzlequest.com." : {
       "comment" : "Options (release builds): explains which custom servers can be used, and why one was refused."
+    },
+    "This challenge has already been answered, perhaps by a teammate, or the puzzle master sent another." : {
+      "comment" : "Quest screen: why an answer to a challenge wasn't taken, when no challenge is waiting any more."
     },
     "This puzzle changed meanwhile, perhaps solved by a teammate. Here's where it stands now." : {
       "comment" : "Puzzle screen: an action was refused because the puzzle had changed; the screen now shows it as it is."
@@ -448,6 +514,12 @@
     },
     "Try again" : {
       "comment" : "Button that tries again: checking a kept session with the server, or loading the player's quests."
+    },
+    "Turn on" : {
+      "comment" : "Quest screen, on the card offering notifications: asks iOS to let the app send them."
+    },
+    "Type your answer first." : {
+      "comment" : "Quest screen: shown under the challenge's answer field when the player sends nothing."
     },
     "Use this server" : {
       "comment" : "Options: button that checks and switches to the typed custom server."

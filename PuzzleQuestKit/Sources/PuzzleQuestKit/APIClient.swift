@@ -210,6 +210,37 @@ public struct APIClient: Sendable {
         }
     }
 
+    /// Sends the session's push notifications to this phone, replacing any
+    /// phone it had; signing out ends them. Every kind is asked for.
+    public func setPushTarget(token: String, environment: PushEnvironment) async throws(APIError) {
+        let output = try await call {
+            try await client.setPushTarget(
+                body: .json(
+                    .init(
+                        platform: .init(value1: .ios), token: token,
+                        environment: .init(
+                            value1: environment == .development ? .development : .production))))
+        }
+        guard case .noContent = output else {
+            throw .unexpectedResponse("setPushTarget: \(output)")
+        }
+    }
+
+    /// Answers the challenge the player's entry is waiting for.
+    /// - Returns: the confirmation to show the venue's staff.
+    public func answerChallenge(
+        questName: String, answer: String
+    ) async throws(APIError) -> ChallengeAnswer {
+        let output = try await call {
+            try await client.answerChallenge(
+                path: .init(questName: questName), body: .json(.init(answer: answer)))
+        }
+        guard case .ok(let ok) = output, case .json(let answered) = ok.body else {
+            throw .unexpectedResponse("answerChallenge: \(output)")
+        }
+        return ChallengeAnswer(answeredAt: answered.answeredAt, confirmation: answered.confirmation)
+    }
+
     /// Sends the user another email with the link that verifies their address.
     public func sendVerificationEmail(userName: String) async throws(APIError) {
         let output = try await call {
