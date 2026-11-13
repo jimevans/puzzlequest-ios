@@ -144,12 +144,15 @@ final class QuestUITests: XCTestCase {
         let ownRow = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier BEGINSWITH 'quest.standing.' AND label CONTAINS 'You'"))
             .firstMatch
-        XCTAssertTrue(ownRow.waitForExistence(timeout: 5), "the player's own entry isn't marked")
+        // The finish panel is tall: the player's row (second) can be below
+        // the bottom of the screen.
+        XCTAssertTrue(app.scrollTo(ownRow), "the player's own entry isn't marked")
         XCTAssertTrue(ownRow.label.contains("2nd"), "the player's row is \(ownRow.label)")
 
         // The solved stop opens to its solution.
         let solved = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier BEGINSWITH 'quest.solved.'")).firstMatch
+        XCTAssertTrue(app.scrollTo(solved), "the solved stop isn't listed")
         solved.tapWhenHittable()
         let solution = app.element("stop.solution")
         XCTAssertTrue(solution.waitForExistence(timeout: 15), "the stop's details didn't open")
