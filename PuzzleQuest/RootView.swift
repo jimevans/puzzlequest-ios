@@ -6,6 +6,7 @@ import SwiftUI
 /// that their tools are on the website.
 struct RootView: View {
     @Environment(SessionStore.self) private var session
+    @Environment(PushRegistrar.self) private var push
 
     var body: some View {
         Group {
@@ -26,6 +27,13 @@ struct RootView: View {
             }
         }
         .task { await session.restore() }
+        // A session that's ended took its notifications with it: the next
+        // sign-in registers the phone again (HomeView does).
+        .onChange(of: session.state == .signedOut) { _, signedOut in
+            if signedOut {
+                push.forgetRegistration()
+            }
+        }
     }
 }
 
