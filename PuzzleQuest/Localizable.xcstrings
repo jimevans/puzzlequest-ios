@@ -59,6 +59,9 @@
     "Another PuzzleQuest server" : {
       "comment" : "Options: describes the Custom server choice."
     },
+    "Answer" : {
+      "comment" : "Quest screen, on the row for a waiting challenge: opens it to answer."
+    },
     "Answered at %@" : {
       "comment" : "Quest screen, on the confirmation of an answered challenge: when it was answered in the app; the argument is a time."
     },
@@ -87,7 +90,13 @@
       "comment" : "Options: keeps the server in use instead of switching."
     },
     "Challenge" : {
-      "comment" : "Quest screen, in the puzzle master's messages: marks a message that set a challenge."
+      "comment" : "In the puzzle master's messages, in the sheet and the list: marks a message that set a challenge."
+    },
+    "Challenge answered" : {
+      "comment" : "Quest screen: the row for the puzzle master's challenge once a player has answered it rightly."
+    },
+    "Challenge waiting" : {
+      "comment" : "Quest screen: the row for the puzzle master's challenge while it waits for an answer."
     },
     "Check answer" : {
       "comment" : "Puzzle screen: button that sends the player's guess at the solution."
@@ -134,7 +143,7 @@
       "comment" : "Options: heading of the section where a custom server's address is typed."
     },
     "Done" : {
-      "comment" : "Options: closes the Options screen."
+      "comment" : "Closes the Options screen, and the sheet of the puzzle master's messages on the quest screen."
     },
     "End of the line" : {
       "comment" : "Heading when the player has finished the quest (the quest's journey is over)."
@@ -164,7 +173,7 @@
       "comment" : "In a stop's times: when it was solved."
     },
     "From the puzzle master" : {
-      "comment" : "Quest screen: heading of the list of messages the puzzle master sent."
+      "comment" : "Quest screen: the row opening the list of messages the puzzle master sent, and the title of that list and of the sheet showing new ones."
     },
     "From the puzzle master: %@" : {
       "comment" : "VoiceOver announcement when the puzzle master sends a message; the argument is the message."
@@ -305,6 +314,9 @@
     },
     "Server in use" : {
       "comment" : "Options: labels the name of the server the app uses now."
+    },
+    "Show confirmation" : {
+      "comment" : "Quest screen, on the row for an answered challenge: opens its confirmation, to show the venue's staff."
     },
     "Show it" : {
       "comment" : "Puzzle screen: alert button that reveals the hint giving the solution away."

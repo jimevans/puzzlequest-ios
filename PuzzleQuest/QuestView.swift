@@ -27,6 +27,9 @@ struct QuestView: View {
             .navigationDestination(for: StopRoute.self) { route in
                 StopDetailView(model: model, puzzleName: route.puzzleName)
             }
+            .navigationDestination(for: MessagesRoute.self) { _ in
+                MessagesHistoryView(model: model)
+            }
             .navigationDestination(for: PuzzleRoute.self) { puzzle in
                 PuzzleView(questName: route.questName, route: puzzle, api: api)
             }
@@ -59,16 +62,34 @@ struct QuestView: View {
             }
     }
 
+    /// Whether the puzzle master's messages are shown over the screen;
+    /// swiping them away puts them away, as Done does.
+    private var messageSheetShown: Binding<Bool> {
+        Binding(
+            get: { model.messageSheet != nil },
+            set: { shown in
+                if !shown { model.dismissMessages() }
+            })
+    }
+
     @ViewBuilder
     private var content: some View {
         if let quest = model.quest {
             QuestProgressList(
                 quest: quest, standings: model.standings,
-                answering: ChallengeAnswering(
-                    isPending: model.answeringChallenge, error: model.challengeError,
-                    answer: { await model.answerChallenge($0) })
+                onShowChallenge: { model.showChallenge() }
             )
             .refreshable { await model.load() }
+            .sheet(isPresented: messageSheetShown) {
+                if let sheet = model.messageSheet {
+                    MessageSheetView(
+                        sheet: sheet, entry: quest.entry,
+                        answering: ChallengeAnswering(
+                            isPending: model.answeringChallenge, error: model.challengeError,
+                            answer: { await model.answerChallenge($0) }),
+                        onDone: { model.dismissMessages() })
+                }
+            }
         } else if model.notAvailable {
             ContentUnavailableView {
                 Label("Quest not available", systemImage: "map")
@@ -153,7 +174,8 @@ struct StopRoute: Hashable {
 struct QuestProgressList: View {
     let quest: PlayerQuest
     let standings: Standings?
-    var answering = ChallengeAnswering()
+    /// Reopens the challenge, to answer it or show its confirmation.
+    var onShowChallenge: () -> Void = {}
 
     var body: some View {
         List {
@@ -170,10 +192,12 @@ struct QuestProgressList: View {
                     .accessibilityIdentifier("quest.paused")
                 }
             }
-            // The puzzle master's challenge comes first: the players are at a
-            // venue, with its staff, waiting on it.
+            // The puzzle master's challenge comes first: the players may be
+            // at a venue, with its staff, waiting on it.
             if let challenge = quest.entry.challenge {
-                ChallengeSection(challenge: challenge, entry: quest.entry, answering: answering)
+                Section {
+                    ChallengeRow(challenge: challenge, onOpen: onShowChallenge)
+                }
             }
             Section {
                 summary
@@ -197,9 +221,6 @@ struct QuestProgressList: View {
                     StandingsSection(standings: standings, ownEntry: quest.entry)
                 }
             }
-            if !quest.entry.messages.isEmpty {
-                MessagesSection(messages: quest.entry.messages)
-            }
             if !quest.entry.finishedStops.isEmpty {
                 Section("Solved") {
                     ForEach(quest.entry.finishedStops) { stop in
@@ -208,6 +229,16 @@ struct QuestProgressList: View {
                         }
                         .accessibilityIdentifier("quest.solved.\(stop.puzzleName)")
                     }
+                }
+            }
+            if !quest.entry.messages.isEmpty {
+                Section {
+                    NavigationLink(value: MessagesRoute()) {
+                        LabeledContent("From the puzzle master") {
+                            Text(quest.entry.messages.count, format: .number)
+                        }
+                    }
+                    .accessibilityIdentifier("quest.messages-row")
                 }
             }
         }

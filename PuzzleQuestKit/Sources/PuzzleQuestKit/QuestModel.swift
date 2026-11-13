@@ -34,9 +34,13 @@ public final class QuestModel {
     /// Why the player's last answer to the challenge didn't succeed, if it
     /// didn't.
     public private(set) var challengeError: ChallengeAnswerError?
+    /// The puzzle master's messages to show over the quest screen, if any:
+    /// those this phone hasn't shown yet, or the challenge reopened.
+    public private(set) var messageSheet: MessageSheet?
 
     private let api: APIClient
     private let follower: LiveUpdateFollower
+    private let messagesSeen: any MessagesSeen
     /// Fetches can overlap; only the latest one's answer is kept.
     private var latestFetch = 0
 
@@ -46,10 +50,12 @@ public final class QuestModel {
 
     package init(
         questName: String, api: APIClient, connector: any LiveSocketConnector,
+        messagesSeen: any MessagesSeen = UserDefaultsMessagesSeen(),
         configure: (inout LiveUpdateFollower) -> Void = { _ in }
     ) {
         self.questName = questName
         self.api = api
+        self.messagesSeen = messagesSeen
         var follower = LiveUpdateFollower(
             url: api.liveUpdatesURL, channel: .quest(questName: questName),
             connector: connector,
@@ -105,6 +111,39 @@ public final class QuestModel {
         return right
     }
 
+    /// Shows the challenge again, waiting or answered, as from the row at
+    /// the top of the quest screen.
+    public func showChallenge() {
+        guard quest?.entry.challenge != nil else { return }
+        messageSheet = MessageSheet(messages: [], showsChallenge: true)
+    }
+
+    /// Puts the messages away, recording them as shown on this phone.
+    public func dismissMessages() {
+        if let sheet = messageSheet, let entryId = quest?.entry.id {
+            messagesSeen.markSeen(sheet.messages.map(\.id), entryId: entryId)
+        }
+        messageSheet = nil
+        challengeError = nil
+    }
+
+    /// Shows the messages this phone hasn't shown yet, newest first, adding
+    /// any that arrive while they're shown. A challenge among them is shown
+    /// first, to answer.
+    private func showUnseenMessages(_ quest: PlayerQuest) {
+        let seen = messagesSeen.seen(entryId: quest.entry.id)
+        let shown = Set(messageSheet?.messages.map(\.id) ?? [])
+        let unseen = quest.entry.messages.filter { !seen.contains($0.id) }
+        guard unseen.contains(where: { !shown.contains($0.id) }) else { return }
+        let challengeIsNew =
+            quest.entry.challenge.map { challenge in
+                unseen.contains { $0.isChallenge && $0.sentAt == challenge.sentAt }
+            } ?? false
+        messageSheet = MessageSheet(
+            messages: unseen.reversed(),
+            showsChallenge: challengeIsNew || messageSheet?.showsChallenge == true)
+    }
+
     /// Clears the message about the last answer, as when the player edits it.
     public func clearChallengeError() {
         challengeError = nil
@@ -142,6 +181,7 @@ public final class QuestModel {
             }
             notAvailable = false
             quest = fetched
+            showUnseenMessages(fetched)
             if let fetchedStandings {
                 // A quest one player or team played has no standings to show.
                 let shown = fetchedStandings.entries.count >= 2 ? fetchedStandings : nil
@@ -160,6 +200,21 @@ public final class QuestModel {
             guard fetch == latestFetch else { return }
             loadFailed = true
         }
+    }
+}
+
+/// The puzzle master's messages shown over the quest screen.
+public struct MessageSheet: Equatable, Sendable {
+    /// The messages to show, newest first; those not shown before, or none
+    /// when the challenge is reopened.
+    public var messages: [PuzzleMasterMessage]
+    /// Whether the entry's challenge is shown, to answer or, once answered,
+    /// with its confirmation.
+    public var showsChallenge: Bool
+
+    public init(messages: [PuzzleMasterMessage], showsChallenge: Bool) {
+        self.messages = messages
+        self.showsChallenge = showsChallenge
     }
 }
 

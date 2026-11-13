@@ -63,10 +63,10 @@ final class QuestUITests: XCTestCase {
         let app = openQuest(quest.questName, as: player)
         try await server.sendChallenge(
             quest.questName, to: player, message: "What lights the harbour?", admin: admin)
+        // It pops up over the quest screen, to answer there.
         let message = app.element("quest.challenge.message")
         XCTAssertTrue(message.waitForExistence(timeout: 15), "the challenge didn't show")
         XCTAssertEqual(message.label, "What lights the harbour?")
-        XCTAssertTrue(app.element("quest.messages").exists, "the message isn't listed")
 
         let field = app.textFields["quest.challenge.answer"]
         field.typeWhenFocused("an organ")
@@ -87,6 +87,23 @@ final class QuestUITests: XCTestCase {
         XCTAssertTrue(
             app.element("quest.challenge.answered").label.contains("Show this to the staff"))
         XCTAssertFalse(field.exists, "it still asks for an answer")
+
+        // Put away, a row brings the confirmation back for the staff.
+        app.buttons["quest.messages.done"].tapWhenHittable()
+        XCTAssertTrue(
+            confirmation.waitForNonExistence(timeout: 15), "the confirmation wasn't put away")
+        let row = app.buttons["quest.challenge-row"]
+        XCTAssertTrue(row.waitForExistence(timeout: 15), "there's no row for the challenge")
+        XCTAssertTrue(row.label.contains("Challenge answered"), "the row is \(row.label)")
+        row.tapWhenHittable()
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 15), "the row didn't reopen it")
+        app.buttons["quest.messages.done"].tapWhenHittable()
+
+        // The message stays in the history.
+        app.element("quest.messages-row").tapWhenHittable()
+        XCTAssertTrue(
+            app.staticTexts["What lights the harbour?"].waitForExistence(timeout: 15),
+            "the message isn't in the history")
     }
 
     @MainActor

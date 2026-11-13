@@ -177,6 +177,10 @@ reset while its quest or puzzle screen is open shows as no longer available at
 once. So do the puzzle master's messages and a challenge being answered (since
 API 1.1), so a challenge appears on the quest screen as it's sent, and its
 confirmation on every teammate's screen as soon as one of them answers it.
+New messages pop up in a sheet once on each phone (which ones it has shown are
+kept in `UserDefaults`), including those that came while the app was closed; a
+challenge is answered there, and a row at the top of the quest screen reopens
+it, or its confirmation, until the next one.
 
 ## Tests
 
@@ -193,7 +197,8 @@ websocket, fetching every page of a list, a quest's clock, the home screen's
 model and email reminder, reading a player's quest and a race's standings,
 what's announced as a quest changes (the puzzle master's messages and an
 answered challenge included), the quest screen's model (answering the
-challenge, rightly, wrongly, and after a teammate), reading a
+challenge, rightly, wrongly, and after a teammate; new messages shown once,
+and the challenge reopened), remembering which messages were shown, reading a
 puzzle (its media on the site) and what's announced as it changes, telling
 refusals apart by their problem types, the puzzle screen's model (activating,
 a code left in front of the camera sent only once, guessing, hints, the
@@ -279,9 +284,10 @@ email again. On the quest screen they see the current stop, and the quest
 paused and resumed as the administrator does it; finish a race (both players
 solving through the API while the screen is open) and see the finish, the
 final standings with the player's own entry marked, and the solved stop's
-solution; see a challenge from the puzzle master appear as it's sent, answer
-it wrongly and then rightly (in other words around its keyword), and see the
-confirmation to show the staff; and see a reset make the quest no longer
+solution; see a challenge from the puzzle master pop up as it's sent, answer
+it wrongly and then rightly (in other words around its keyword), see the
+confirmation to show the staff, put it away and bring it back from the row at
+the top, and find the message in the history; and see a reset make the quest no longer
 available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked

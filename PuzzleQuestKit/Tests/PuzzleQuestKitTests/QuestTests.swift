@@ -311,10 +311,87 @@ final class QuestServer: Sendable {
 struct QuestModelTests {
     let connector = FakeLiveSocketConnector()
 
-    private func model(_ server: QuestServer) -> QuestModel {
+    private func model(
+        _ server: QuestServer, seen: any MessagesSeen = InMemoryMessagesSeen()
+    ) -> QuestModel {
         QuestModel(
             questName: "harbor", api: api(server.transport, tokens: InMemoryTokenStore(token: "t")),
-            connector: connector, configure: { $0.wait = { _ in } })
+            connector: connector, messagesSeen: seen, configure: { $0.wait = { _ in } })
+    }
+
+    @Test("New messages are shown once on this phone, newest first, and put away when dismissed")
+    func messagesShownOnce() async {
+        let messages = [messageJSON("Welcome!", at: 1), messageJSON("Hurry!", at: 2)]
+        let server = QuestServer(quests: [
+            playerQuestJSON([stopJSON("quay")]),
+            playerQuestJSON([stopJSON("quay")], messages: messages),
+            playerQuestJSON([stopJSON("quay")], messages: messages),
+        ])
+        let seen = InMemoryMessagesSeen()
+        let quest = model(server, seen: seen)
+        await quest.load()
+        #expect(quest.messageSheet == nil)
+
+        await quest.load()
+        #expect(quest.messageSheet?.messages.map(\.text) == ["Hurry!", "Welcome!"])
+        #expect(quest.messageSheet?.showsChallenge == false)
+        quest.dismissMessages()
+        #expect(quest.messageSheet == nil)
+
+        await quest.load()
+        #expect(quest.messageSheet == nil)
+        // Nor on opening the quest again.
+        let again = model(QuestServer(quests: [playerQuestJSON([stopJSON("quay")], messages: messages)]), seen: seen)
+        await again.load()
+        #expect(again.messageSheet == nil)
+    }
+
+    @Test("A message arriving while others are shown joins them")
+    func messageJoinsTheSheet() async {
+        let server = QuestServer(quests: [
+            playerQuestJSON([stopJSON("quay")], messages: [messageJSON("Welcome!", at: 1)]),
+            playerQuestJSON(
+                [stopJSON("quay")], messages: [messageJSON("Welcome!", at: 1), messageJSON("Hurry!", at: 2)]),
+        ])
+        let quest = model(server)
+        await quest.load()
+        await quest.load()
+        #expect(quest.messageSheet?.messages.map(\.text) == ["Hurry!", "Welcome!"])
+    }
+
+    @Test("A new challenge is shown to answer; once put away, it can be reopened, answered or not")
+    func challengeSheet() async {
+        let waiting = playerQuestJSON(
+            [stopJSON("quay")], messages: [messageJSON("Riddle?", at: 10, challenge: true)],
+            challenge: challengeJSON("Riddle?"))
+        let answered = playerQuestJSON(
+            [stopJSON("quay")], messages: [messageJSON("Riddle?", at: 10, challenge: true)],
+            challenge: challengeJSON("Riddle?", answeredVia: "app"))
+        let server = QuestServer(
+            quests: [waiting, answered],
+            answers: [json(200, #"{"confirmation":"Show this to the bartender","answeredAt":"2026-11-11T16:20:00.000Z"}"#)])
+        let quest = model(server)
+        await quest.load()
+        #expect(quest.messageSheet?.showsChallenge == true)
+
+        // Answered in the sheet, which stays, showing the confirmation.
+        #expect(await quest.answerChallenge("lighthouse"))
+        #expect(quest.messageSheet?.showsChallenge == true)
+        #expect(quest.quest?.entry.challenge?.answer != nil)
+
+        quest.dismissMessages()
+        #expect(quest.messageSheet == nil)
+        quest.showChallenge()
+        #expect(quest.messageSheet == MessageSheet(messages: [], showsChallenge: true))
+        quest.dismissMessages()
+    }
+
+    @Test("Nothing reopens when there's no challenge")
+    func noChallengeToShow() async {
+        let quest = model(QuestServer(quests: [playerQuestJSON([stopJSON("quay")])]))
+        await quest.load()
+        quest.showChallenge()
+        #expect(quest.messageSheet == nil)
     }
 
     @Test("It loads the quest; a failed first fetch is reported; a failed refresh keeps what's shown")
@@ -496,5 +573,21 @@ struct QuestModelTests {
         await quest.load()
         #expect(quest.quest?.entry.isFinished == true)
         #expect(quest.standings == nil)
+    }
+}
+
+@Suite("Remembering which messages were shown")
+struct MessagesSeenTests {
+    @Test("UserDefaults keeps them per entry, across instances")
+    func userDefaults() throws {
+        let suite = "PuzzleQuestKitTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let seen = UserDefaultsMessagesSeen(defaults: defaults)
+        #expect(seen.seen(entryId: "e1").isEmpty)
+        seen.markSeen(["a", "b"], entryId: "e1")
+        seen.markSeen(["c"], entryId: "e1")
+        #expect(UserDefaultsMessagesSeen(defaults: defaults).seen(entryId: "e1") == ["a", "b", "c"])
+        #expect(seen.seen(entryId: "e2").isEmpty)
     }
 }
