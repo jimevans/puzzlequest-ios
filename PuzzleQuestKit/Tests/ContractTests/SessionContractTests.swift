@@ -139,17 +139,23 @@ struct SessionContractTests {
         #expect(failures.last == .tooManyAttempts)
     }
 
-    @Test("The server is the pinned version of the API")
+    @Test("The server serves the version of the API the app is pinned to")
     func pinnedVersion() async throws {
         let (data, _) = try await URLSession.shared.data(
             from: TestServer.url!.appending(path: "api/v1/openapi.json"))
         let served = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let info = served?["info"] as? [String: Any]
-        // api/VERSION holds the pinned release's tag, such as v1.0.1.
-        let pinned = try String(
-            contentsOf: URL(filePath: #filePath)
-                .appending(path: "../../../../api/VERSION").standardized,
-            encoding: .utf8)
-        #expect("v\(info?["version"] as? String ?? "")" == pinned.trimmingCharacters(in: .whitespacesAndNewlines))
+        // The pinned release's description (api/openapi.json). Its API
+        // version can be older than the release's tag (api/VERSION): a
+        // release that changes only the server, such as 1.1.2, keeps the
+        // API's version.
+        let pinned = try JSONSerialization.jsonObject(
+            with: Data(
+                contentsOf: URL(filePath: #filePath)
+                    .appending(path: "../../../../api/openapi.json").standardized))
+            as? [String: Any]
+        let servedVersion = (served?["info"] as? [String: Any])?["version"] as? String
+        let pinnedVersion = (pinned?["info"] as? [String: Any])?["version"] as? String
+        #expect(servedVersion != nil)
+        #expect(servedVersion == pinnedVersion)
     }
 }
