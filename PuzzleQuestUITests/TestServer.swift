@@ -220,6 +220,27 @@ struct TestServer {
     func start(_ questName: String, admin token: String) async throws {
         try await call("POST", "quests/\(questName)/start", token: token)
     }
+
+    /// As the puzzle master, sends the player a challenge whose answer is
+    /// "lighthouse", and whose confirmation is "Show this to the bartender".
+    /// It first registers a phone for the player on another session of
+    /// theirs, since only players with the app or a phone number to text can
+    /// be sent one; the test server sends nothing to it.
+    func sendChallenge(
+        _ questName: String, to player: String, message: String, admin token: String
+    ) async throws {
+        try await call(
+            "PUT", "sessions/current/push-target", token: try await self.token(for: player),
+            body: [
+                "platform": "ios", "token": Self.unique("phone"), "environment": "development",
+            ])
+        try await call(
+            "POST", "quests/\(questName)/players/\(player)/text-messages", token: token,
+            body: [
+                "message": message, "expectedResponse": "lighthouse",
+                "responseConfirmation": "Show this to the bartender",
+            ])
+    }
 }
 
 extension XCUIApplication {

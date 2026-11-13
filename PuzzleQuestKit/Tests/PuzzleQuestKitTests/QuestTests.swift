@@ -26,14 +26,33 @@ func stopJSON(_ name: String, status: String = "inProgress", solution: String? =
     return #"{"puzzleName":"\#(name)","displayName":"The \#(name)","status":"\#(status)","statusDescription":"\#(description)","hintsRevealed":0,"activationTime":null,"startTime":"2026-11-11T16:00:00.000Z","endTime":null,"skipped":false,"hints":[]\#(solutionField)}"#
 }
 
+/// A message from the puzzle master, as the API sends it.
+func messageJSON(_ text: String, at minute: Int = 5, challenge: Bool = false) -> String {
+    #"{"text":"\#(text)","sentAt":"2026-11-11T16:\#(String(format: "%02d", minute)):00.000Z","challenge":\#(challenge)}"#
+}
+
+/// The entry's challenge as the API sends it to a player: the confirmation
+/// only once it's answered.
+func challengeJSON(
+    _ message: String = "What lights the harbour?", answeredVia: String? = nil
+) -> String {
+    let answered =
+        answeredVia.map {
+            #""answeredAt":"2026-11-11T16:20:00.000Z","answeredVia":"\#($0)","confirmation":"Show this to the bartender""#
+        } ?? #""answeredAt":null,"answeredVia":null"#
+    return #"{"challengeId":"c1","message":"\#(message)","sentAt":"2026-11-11T16:10:00.000Z",\#(answered)}"#
+}
+
 /// A player's quest as the API sends it, with their entry's stops.
 func playerQuestJSON(
     _ stops: [String], status: String = "inProgress", paused: Bool = false,
-    clocks: [String] = [], kind: String = "player", entryId: String = "e1"
+    clocks: [String] = [], kind: String = "player", entryId: String = "e1",
+    messages: [String] = [], challenge: String = "null"
 ) -> String {
     #"""
     {"questName":"harbor","displayName":"Harbor walk","entries":[{"id":"\#(entryId)",
      "entrant":{"kind":"\#(kind)","name":"pat","displayName":"Pat"},
+     "messages":[\#(messages.joined(separator: ","))],"challenge":\#(challenge),
      "status":"\#(status)","statusDescription":"\#(status == "completed" ? "Finished" : "In progress")",
      "paused":\#(paused),"puzzles":[\#(stops.joined(separator: ","))],
      "progress":{"startTime":"2026-11-11T16:00:00.000Z","endTime":null,"running":\#(!paused && status != "completed"),
@@ -80,6 +99,38 @@ struct PlayerQuestTests {
         #expect(quest.entry.stops[0].clock?.totalMs == 6000)
         #expect(quest.entry.stops[1].clock == nil)
         #expect(transport.requests.map(\.request.path) == ["/quests/harbor"])
+    }
+
+    @Test("The puzzle master's messages and challenge are read; the confirmation only once answered")
+    func messagesAndChallenge() async throws {
+        let waiting = FakeTransport { _ in
+            json(
+                200,
+                playerQuestJSON(
+                    [stopJSON("quay")], kind: "team",
+                    messages: [
+                        messageJSON("Welcome!", at: 1),
+                        messageJSON("What lights the harbour?", at: 10, challenge: true),
+                    ],
+                    challenge: challengeJSON()))
+        }
+        let quest = try #require(try await api(waiting).playerQuest(questName: "harbor"))
+        #expect(quest.entry.entrantName == "Pat")
+        #expect(quest.entry.messages.map(\.text) == ["Welcome!", "What lights the harbour?"])
+        #expect(quest.entry.messages.map(\.isChallenge) == [false, true])
+        let challenge = try #require(quest.entry.challenge)
+        #expect(challenge.message == "What lights the harbour?")
+        #expect(challenge.answer == nil)
+        #expect(quest.entry.waitingChallenge == challenge)
+
+        let answered = FakeTransport { _ in
+            json(200, playerQuestJSON([stopJSON("quay")], challenge: challengeJSON(answeredVia: "sms")))
+        }
+        let after = try #require(try await api(answered).playerQuest(questName: "harbor"))
+        let answer = try #require(after.entry.challenge?.answer)
+        #expect(answer.confirmation == "Show this to the bartender")
+        #expect(answer.byText)
+        #expect(after.entry.waitingChallenge == nil)
     }
 
     @Test("A finished quest has no current stop")
@@ -170,6 +221,28 @@ struct QuestChangeTests {
                 == [.stopSolved(displayName: "Quay"), .finished])
     }
 
+    @Test("A new message, and the challenge being answered, are announced")
+    func messagesAndChallenge() {
+        let sent = Date(timeIntervalSince1970: 1000)
+        var before = quest([stop(1, "Quay", .inProgress)])
+        before.entry.messages = [PuzzleMasterMessage(text: "Welcome!", sentAt: sent)]
+        before.entry.challenge = Challenge(challengeId: "c1", message: "Riddle?", sentAt: sent)
+        var after = before
+        after.entry.messages.append(
+            PuzzleMasterMessage(text: "Hurry!", sentAt: sent.addingTimeInterval(60)))
+        after.entry.challenge?.answer = ChallengeAnswer(answeredAt: sent, confirmation: "Yes")
+        #expect(
+            QuestChange.between(before, after)
+                == [.messageReceived(text: "Hurry!", isChallenge: false), .challengeAnswered])
+
+        // A new challenge arriving already answered isn't announced as answered.
+        var replaced = after
+        replaced.entry.challenge = Challenge(
+            challengeId: "c2", message: "Another?", sentAt: sent.addingTimeInterval(120),
+            answer: ChallengeAnswer(answeredAt: sent, confirmation: "Yes"))
+        #expect(QuestChange.between(before, replaced).contains(.challengeAnswered) == false)
+    }
+
     func standing(_ id: String, _ rank: Int?) -> Standing {
         Standing(
             id: id, displayName: id, isTeam: true, status: rank == nil ? .inProgress : .completed,
@@ -203,11 +276,17 @@ struct QuestChangeTests {
 final class QuestServer: Sendable {
     let transport: FakeTransport
 
-    init(quests: [String], standings: [String] = [], fails: Bool = false) {
+    init(
+        quests: [String], standings: [String] = [], answers: [HTTPAnswer] = [],
+        fails: Bool = false
+    ) {
         let quests = Shared(quests)
         let standings = Shared(standings)
+        let answers = Shared(answers)
         transport = FakeTransport { operation in
             switch operation {
+            case "answerChallenge":
+                return answers.withLock { $0.removeFirst() }
             case "getQuest":
                 if fails { throw URLError(.notConnectedToInternet) }
                 let next = quests.withLock { $0.count > 1 ? $0.removeFirst() : $0[0] }
@@ -303,6 +382,79 @@ struct QuestModelTests {
             ])
         // Not finished, so no standings asked for.
         #expect(server.count("getSpectatorQuest") == 0)
+    }
+
+    @Test("A wrong answer to the challenge is explained; a right one shows the confirmation")
+    func answersTheChallenge() async {
+        let waiting = playerQuestJSON([stopJSON("quay")], challenge: challengeJSON())
+        let server = QuestServer(
+            quests: [waiting, waiting, playerQuestJSON([stopJSON("quay")], challenge: challengeJSON(answeredVia: "app"))],
+            answers: [
+                problem(422, Problem.Types.wrongAnswer),
+                json(200, #"{"confirmation":"Show this to the bartender","answeredAt":"2026-11-11T16:20:00.000Z"}"#),
+            ])
+        let quest = model(server)
+        await quest.load()
+
+        #expect(await quest.answerChallenge("an organ") == false)
+        #expect(quest.challengeError == .wrongAnswer)
+        #expect(!quest.answeringChallenge)
+
+        #expect(await quest.answerChallenge("the lighthouse"))
+        #expect(quest.challengeError == nil)
+        #expect(quest.quest?.entry.challenge?.answer?.confirmation == "Show this to the bartender")
+        // The quest is fetched again after each answer.
+        #expect(server.count("getQuest") == 3)
+        let sent = server.transport.requests.filter { $0.operationID == "answerChallenge" }
+        #expect(sent.map(\.request.path) == ["/quests/harbor/challenge/answers", "/quests/harbor/challenge/answers"])
+        #expect(sent.last?.body?.contains("the lighthouse") == true)
+    }
+
+    @Test("A challenge a teammate answered first is explained, and so are other refusals")
+    func challengeRefusals() async {
+        let cases: [(HTTPAnswer, ChallengeAnswerError)] = [
+            (problem(409, Problem.Types.wrongState), .changed),
+            (problem(403, "/problems/forbidden"), .changed),
+            (problem(429, Problem.Types.tooManyRequests), .tooManyAttempts),
+            (problem(500, Problem.Types.unexpected), .unexpected),
+        ]
+        for (answer, expected) in cases {
+            let quest = model(QuestServer(quests: [playerQuestJSON([stopJSON("quay")])], answers: [answer]))
+            #expect(await quest.answerChallenge("x") == false)
+            #expect(quest.challengeError == expected)
+            quest.clearChallengeError()
+            #expect(quest.challengeError == nil)
+        }
+    }
+
+    @Test("The puzzle master's messages and answered challenges arrive as live updates")
+    func messagesArriveLive() async throws {
+        let server = QuestServer(quests: [
+            playerQuestJSON([stopJSON("quay")]),
+            playerQuestJSON([stopJSON("quay")]),
+            playerQuestJSON(
+                [stopJSON("quay")], messages: [messageJSON("Riddle?", at: 10, challenge: true)],
+                challenge: challengeJSON("Riddle?")),
+            playerQuestJSON(
+                [stopJSON("quay")], messages: [messageJSON("Riddle?", at: 10, challenge: true)],
+                challenge: challengeJSON("Riddle?", answeredVia: "sms")),
+        ])
+        let quest = model(server)
+        await quest.load()
+        let following = Task { await quest.followLiveUpdates() }
+        defer { following.cancel() }
+        let socket = try await connector.socket(0)
+        socket.deliver(#"{"message":"connection","connectionId":"c1"}"#)
+        try await eventually("live") { quest.isLive }
+
+        socket.deliver(#"{"message":"messageSent","questName":"harbor","entryId":"e1"}"#)
+        try await eventually("message") { quest.changeCount == 1 }
+        #expect(quest.changes == [.messageReceived(text: "Riddle?", isChallenge: true)])
+
+        socket.deliver(#"{"message":"challengeAnswered","questName":"harbor","entryId":"e1"}"#)
+        try await eventually("answered") { quest.changeCount == 2 }
+        #expect(quest.changes == [.challengeAnswered])
+        #expect(quest.quest?.entry.challenge?.answer?.byText == true)
     }
 
     @Test("Once finished, a race's standings are shown, and rivals finishing are announced")

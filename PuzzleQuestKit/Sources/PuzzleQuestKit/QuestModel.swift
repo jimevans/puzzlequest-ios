@@ -29,6 +29,11 @@ public final class QuestModel {
     /// Changes each time following should start again on a new connection;
     /// the screen restarts its following task when it does (`.task(id:)`).
     public private(set) var followGeneration = 0
+    /// True while the player's answer to the challenge is being sent.
+    public private(set) var answeringChallenge = false
+    /// Why the player's last answer to the challenge didn't succeed, if it
+    /// didn't.
+    public private(set) var challengeError: ChallengeAnswerError?
 
     private let api: APIClient
     private let follower: LiveUpdateFollower
@@ -77,6 +82,32 @@ public final class QuestModel {
                 break
             }
         }
+    }
+
+    /// Answers the challenge the player's entry is waiting for. However it
+    /// turns out, the quest is fetched again: a right answer shows the
+    /// confirmation, and a refusal often means a teammate answered first.
+    /// - Returns: whether the answer was right.
+    @discardableResult
+    public func answerChallenge(_ answer: String) async -> Bool {
+        guard !answeringChallenge else { return false }
+        answeringChallenge = true
+        challengeError = nil
+        defer { answeringChallenge = false }
+        var right = true
+        do throws(APIError) {
+            _ = try await api.answerChallenge(questName: questName, answer: answer)
+        } catch {
+            right = false
+            challengeError = ChallengeAnswerError(error)
+        }
+        await fetch()
+        return right
+    }
+
+    /// Clears the message about the last answer, as when the player edits it.
+    public func clearChallengeError() {
+        challengeError = nil
     }
 
     /// Back in the foreground: follows again on a new connection, and fetches.
@@ -128,6 +159,34 @@ public final class QuestModel {
         } catch {
             guard fetch == latestFetch else { return }
             loadFailed = true
+        }
+    }
+}
+
+/// Why a player's answer to a challenge didn't succeed.
+public enum ChallengeAnswerError: Equatable, Sendable {
+    case wrongAnswer
+    /// Too many tries in a short time.
+    case tooManyAttempts
+    /// No challenge is waiting any more: a teammate answered it first, or the
+    /// quest changed; the screen now shows where it stands.
+    case changed
+    case unreachable
+    case unexpected
+
+    init(_ error: APIError) {
+        switch error {
+        case .problem(let problem):
+            switch problem.type {
+            case Problem.Types.wrongAnswer: self = .wrongAnswer
+            case Problem.Types.tooManyRequests: self = .tooManyAttempts
+            case Problem.Types.wrongState: self = .changed
+            default: self = [403, 404].contains(problem.status) ? .changed : .unexpected
+            }
+        case .unreachable:
+            self = .unreachable
+        case .unexpectedResponse:
+            self = .unexpected
         }
     }
 }

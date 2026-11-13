@@ -210,6 +210,21 @@ public struct APIClient: Sendable {
         }
     }
 
+    /// Answers the challenge the player's entry is waiting for.
+    /// - Returns: the confirmation to show the venue's staff.
+    public func answerChallenge(
+        questName: String, answer: String
+    ) async throws(APIError) -> ChallengeAnswer {
+        let output = try await call {
+            try await client.answerChallenge(
+                path: .init(questName: questName), body: .json(.init(answer: answer)))
+        }
+        guard case .ok(let ok) = output, case .json(let answered) = ok.body else {
+            throw .unexpectedResponse("answerChallenge: \(output)")
+        }
+        return ChallengeAnswer(answeredAt: answered.answeredAt, confirmation: answered.confirmation)
+    }
+
     /// Sends the user another email with the link that verifies their address.
     public func sendVerificationEmail(userName: String) async throws(APIError) {
         let output = try await call {

@@ -54,6 +54,42 @@ final class QuestUITests: XCTestCase {
     }
 
     @MainActor
+    func testAChallengeArrivesAsItIsSentAndARightAnswerShowsTheConfirmation() async throws {
+        let player = try await server.newPlayer()
+        let admin = try await server.adminToken()
+        let quest = try await server.makeQuest(for: player, admin: admin)
+        try await server.start(quest.questName, admin: admin)
+
+        let app = openQuest(quest.questName, as: player)
+        try await server.sendChallenge(
+            quest.questName, to: player, message: "What lights the harbour?", admin: admin)
+        let message = app.element("quest.challenge.message")
+        XCTAssertTrue(message.waitForExistence(timeout: 15), "the challenge didn't show")
+        XCTAssertEqual(message.label, "What lights the harbour?")
+        XCTAssertTrue(app.element("quest.messages").exists, "the message isn't listed")
+
+        let field = app.textFields["quest.challenge.answer"]
+        field.typeWhenFocused("an organ")
+        app.buttons["quest.challenge.answer.send"].tapWhenHittable()
+        let error = app.element("quest.challenge.error")
+        XCTAssertTrue(error.waitForExistence(timeout: 15), "the wrong answer wasn't refused")
+        XCTAssertTrue(error.label.contains("not the answer"), "it says \(error.label)")
+
+        // Keywords, as puzzle answers: other words around it are fine.
+        let typed = (field.value as? String) ?? ""
+        field.typeWhenFocused(
+            String(repeating: XCUIKeyboardKey.delete.rawValue, count: typed.count)
+                + "It's the Lighthouse!")
+        app.buttons["quest.challenge.answer.send"].tapWhenHittable()
+        let confirmation = app.element("quest.challenge.confirmation")
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 15), "the confirmation didn't show")
+        XCTAssertEqual(confirmation.label, "Show this to the bartender")
+        XCTAssertTrue(
+            app.element("quest.challenge.answered").label.contains("Show this to the staff"))
+        XCTAssertFalse(field.exists, "it still asks for an answer")
+    }
+
+    @MainActor
     func testFinishingARaceShowsTheFinishTheSolutionAndTheStandings() async throws {
         let player = try await server.newPlayer()
         let rival = try await server.newPlayer()

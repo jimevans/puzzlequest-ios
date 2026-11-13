@@ -62,8 +62,13 @@ struct QuestView: View {
     @ViewBuilder
     private var content: some View {
         if let quest = model.quest {
-            QuestProgressList(quest: quest, standings: model.standings)
-                .refreshable { await model.load() }
+            QuestProgressList(
+                quest: quest, standings: model.standings,
+                answering: ChallengeAnswering(
+                    isPending: model.answeringChallenge, error: model.challengeError,
+                    answer: { await model.answerChallenge($0) })
+            )
+            .refreshable { await model.load() }
         } else if model.notAvailable {
             ContentUnavailableView {
                 Label("Quest not available", systemImage: "map")
@@ -112,6 +117,12 @@ struct QuestView: View {
                 localized:
                     "Final standings: \(winners.map(StandingsSection.name(of:)).formatted(.list(type: .and))) won."
             )
+        case .messageReceived(let text, let isChallenge):
+            isChallenge
+                ? String(localized: "A challenge from the puzzle master: \(text)")
+                : String(localized: "From the puzzle master: \(text)")
+        case .challengeAnswered:
+            String(localized: "The challenge is answered. Show the confirmation to the staff.")
         }
     }
 
@@ -142,6 +153,7 @@ struct StopRoute: Hashable {
 struct QuestProgressList: View {
     let quest: PlayerQuest
     let standings: Standings?
+    var answering = ChallengeAnswering()
 
     var body: some View {
         List {
@@ -157,6 +169,11 @@ struct QuestProgressList: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("quest.paused")
                 }
+            }
+            // The puzzle master's challenge comes first: the players are at a
+            // venue, with its staff, waiting on it.
+            if let challenge = quest.entry.challenge {
+                ChallengeSection(challenge: challenge, entry: quest.entry, answering: answering)
             }
             Section {
                 summary
@@ -179,6 +196,9 @@ struct QuestProgressList: View {
                 if let standings {
                     StandingsSection(standings: standings, ownEntry: quest.entry)
                 }
+            }
+            if !quest.entry.messages.isEmpty {
+                MessagesSection(messages: quest.entry.messages)
             }
             if !quest.entry.finishedStops.isEmpty {
                 Section("Solved") {

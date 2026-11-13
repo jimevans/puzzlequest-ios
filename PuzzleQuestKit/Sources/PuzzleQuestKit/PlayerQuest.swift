@@ -32,10 +32,18 @@ public struct QuestEntryProgress: Equatable, Sendable {
     public var clock: QuestClock
     /// The stops reached, in the order they were reached.
     public var stops: [Stop]
+    /// The team's or player's display name; nil if it has been deleted.
+    public var entrantName: String?
+    /// What the puzzle master has sent the entry's players, oldest first.
+    public var messages: [PuzzleMasterMessage]
+    /// The challenge the puzzle master last sent, answered or not.
+    public var challenge: Challenge?
 
     public init(
         id: String, isTeam: Bool, status: QuestStatus, statusDescription: String, paused: Bool,
-        startTime: Date?, endTime: Date?, clock: QuestClock, stops: [Stop]
+        startTime: Date?, endTime: Date?, clock: QuestClock, stops: [Stop],
+        entrantName: String? = nil, messages: [PuzzleMasterMessage] = [],
+        challenge: Challenge? = nil
     ) {
         self.id = id
         self.isTeam = isTeam
@@ -46,6 +54,14 @@ public struct QuestEntryProgress: Equatable, Sendable {
         self.endTime = endTime
         self.clock = clock
         self.stops = stops
+        self.entrantName = entrantName
+        self.messages = messages
+        self.challenge = challenge
+    }
+
+    /// The challenge waiting for the players to answer it, if any.
+    public var waitingChallenge: Challenge? {
+        challenge?.answer == nil ? challenge : nil
     }
 
     public var isFinished: Bool { status == .completed }
@@ -102,6 +118,56 @@ public struct Stop: Equatable, Identifiable, Sendable {
         self.endTime = endTime
         self.solutionText = solutionText
         self.clock = clock
+    }
+}
+
+/// A message the puzzle master sent the entry's players.
+public struct PuzzleMasterMessage: Equatable, Identifiable, Sendable {
+    public var text: String
+    public var sentAt: Date
+    /// True if it set a challenge for the players to answer.
+    public var isChallenge: Bool
+
+    /// Messages have no ID of their own; none is sent twice at one moment.
+    public var id: String { "\(sentAt.timeIntervalSince1970) \(text)" }
+
+    public init(text: String, sentAt: Date, isChallenge: Bool = false) {
+        self.text = text
+        self.sentAt = sentAt
+        self.isChallenge = isChallenge
+    }
+}
+
+/// A challenge from the puzzle master: a small puzzle the players answer, in
+/// the app or by text. A right answer shows the confirmation, which they show
+/// the venue's staff to be given what comes next.
+public struct Challenge: Equatable, Sendable {
+    public var challengeId: String
+    public var message: String
+    public var sentAt: Date
+    /// The right answer, once a player has given it; nil while it waits.
+    public var answer: ChallengeAnswer?
+
+    public init(challengeId: String, message: String, sentAt: Date, answer: ChallengeAnswer? = nil) {
+        self.challengeId = challengeId
+        self.message = message
+        self.sentAt = sentAt
+        self.answer = answer
+    }
+}
+
+/// How a challenge was answered.
+public struct ChallengeAnswer: Equatable, Sendable {
+    public var answeredAt: Date
+    /// What to show the venue's staff.
+    public var confirmation: String
+    /// True if a player answered by text message, not in the app.
+    public var byText: Bool
+
+    public init(answeredAt: Date, confirmation: String, byText: Bool = false) {
+        self.answeredAt = answeredAt
+        self.confirmation = confirmation
+        self.byText = byText
     }
 }
 
@@ -183,6 +249,10 @@ public enum QuestChange: Equatable, Sendable {
     case rivalFinished(Standing, rank: Int)
     /// Every entry has finished: these won (more than one if tied).
     case standingsFinal(winners: [Standing])
+    /// The puzzle master sent a message, or a challenge.
+    case messageReceived(text: String, isChallenge: Bool)
+    /// A player answered the challenge rightly.
+    case challengeAnswered
 
     /// What changed between two views of a quest, in the order a player
     /// would read them.
@@ -203,6 +273,17 @@ public enum QuestChange: Equatable, Sendable {
         }
         if after.entry.isFinished && !before.entry.isFinished {
             changes.append(.finished)
+        }
+        let known = Set(before.entry.messages.map(\.id))
+        for message in after.entry.messages where !known.contains(message.id) {
+            changes.append(.messageReceived(text: message.text, isChallenge: message.isChallenge))
+        }
+        // The same challenge, waiting before and answered now.
+        if let waiting = before.entry.challenge, waiting.answer == nil,
+            let answered = after.entry.challenge, answered.answer != nil,
+            answered.challengeId == waiting.challengeId, answered.sentAt == waiting.sentAt
+        {
+            changes.append(.challengeAnswered)
         }
         return changes
     }
@@ -268,6 +349,26 @@ extension QuestEntryProgress {
                     endTime: puzzle.endTime,
                     solutionText: puzzle.solutionText,
                     clock: clocks[puzzle.puzzleName])
+            },
+            entrantName: entry.entrant.displayName,
+            messages: entry.messages.map {
+                PuzzleMasterMessage(text: $0.text, sentAt: $0.sentAt, isChallenge: $0.challenge)
+            },
+            challenge: entry.challenge.map(Challenge.init))
+    }
+}
+
+extension Challenge {
+    init(_ challenge: Components.Schemas.EntryChallenge) {
+        self.init(
+            challengeId: challenge.challengeId, message: challenge.message,
+            sentAt: challenge.sentAt,
+            answer: challenge.answeredAt.map { answeredAt in
+                ChallengeAnswer(
+                    answeredAt: answeredAt,
+                    // Players are shown it once it's answered.
+                    confirmation: challenge.confirmation ?? "",
+                    byText: challenge.answeredVia?.value1 == .sms)
             })
     }
 }

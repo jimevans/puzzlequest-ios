@@ -121,7 +121,8 @@ server's origin could be accepted alongside the allowlist (see
 - `Config/`: the debug build's Info.plist additions: it allows plain HTTP, to
   any server.
 - `api/`: the pinned API release: its description (`openapi.json`), its
-  live-update messages (`live-updates.json`), and its tag (`VERSION`).
+  live-update messages (`live-updates.json`), what its push notifications
+  carry (`push-notifications.json`, from 1.1), and its tag (`VERSION`).
 - `scripts/`: moving to a new API release, and running the test server.
 
 ## The API and moving to a new release
@@ -173,7 +174,9 @@ connection's id with the player's own actions, so the server doesn't send it
 their updates: it fetches the puzzle again after each action itself. Starting
 and resetting a quest reach its followers too (since API 1.0.2), so a quest
 reset while its quest or puzzle screen is open shows as no longer available at
-once.
+once. So do the puzzle master's messages and a challenge being answered (since
+API 1.1), so a challenge appears on the quest screen as it's sent, and its
+confirmation on every teammate's screen as soon as one of them answers it.
 
 ## Tests
 
@@ -188,7 +191,9 @@ reading newer responses, explaining errors, restoring and ending sessions
 against a fake network, the Keychain, following live updates over a fake
 websocket, fetching every page of a list, a quest's clock, the home screen's
 model and email reminder, reading a player's quest and a race's standings,
-what's announced as a quest changes, the quest screen's model, reading a
+what's announced as a quest changes (the puzzle master's messages and an
+answered challenge included), the quest screen's model (answering the
+challenge, rightly, wrongly, and after a teammate), reading a
 puzzle (its media on the site) and what's announced as it changes, telling
 refusals apart by their problem types, the puzzle screen's model (activating,
 a code left in front of the camera sent only once, guessing, hints, the
@@ -240,7 +245,10 @@ get live tickets; follow the player's quests over the real websocket and hear
 of a quest starting; fetch a quest as its player before and after it starts,
 solve its stop (finding the activation code as the administrator) and see it
 finished with its solution, see a two-player race's standings provisional and
-then final, find a reset quest no longer available, and hear of the player's
+then final, receive a challenge from the puzzle master (with a phone
+registered for the player, so it can reach them) and have a wrong answer
+refused, a right one in other words accepted with its confirmation, and a
+second answer refused, find a reset quest no longer available, and hear of the player's
 own progress over the quest's websocket; see a puzzle waiting to be found
 show nothing of itself, have a wrong code refused and the right one accepted
 in any letter case, reveal a hint and see its penalty and the next one's
@@ -271,7 +279,10 @@ email again. On the quest screen they see the current stop, and the quest
 paused and resumed as the administrator does it; finish a race (both players
 solving through the API while the screen is open) and see the finish, the
 final standings with the player's own entry marked, and the solved stop's
-solution; and see a reset make the quest no longer available as it happens. On the puzzle screen they type a wrong code and then the right one
+solution; see a challenge from the puzzle master appear as it's sent, answer
+it wrongly and then rightly (in other words around its keyword), and see the
+confirmation to show the staff; and see a reset make the quest no longer
+available as it happens. On the puzzle screen they type a wrong code and then the right one
 (a simulator has no camera VisionKit can scan with, so the screen offers
 typing, as on a phone whose camera can't be used), reveal a hint, are asked
 before the hint that gives the solution away, answer wrongly and then rightly,
