@@ -76,10 +76,18 @@ final class SignInUITests: XCTestCase {
         // Filled in, it signs up and goes straight to the new player's home.
         let userName = TestServer.unique("signup")
         app.textFields["sign-up.userName"].typeWhenFocused(userName)
-        app.secureTextFields["sign-up.password"].typeWhenFocused(server.password)
+        let newPassword = app.secureTextFields["sign-up.password"]
+        newPassword.tapWhenHittable()
+        app.dismissStrongPasswordOffer()
+        newPassword.typeWhenFocused(server.password)
         app.secureTextFields["sign-up.confirmPassword"].typeWhenFocused(server.password)
         app.textFields["sign-up.displayName"].typeWhenFocused("Player \(userName)")
         app.textFields["sign-up.email"].typeWhenFocused("\(userName)@example.com")
+        // Fixing one field leaves the keyboard there: every letter lands where
+        // it was typed.
+        XCTAssertEqual(app.textFields["sign-up.userName"].value as? String, userName)
+        XCTAssertEqual(app.textFields["sign-up.displayName"].value as? String, "Player \(userName)")
+        XCTAssertEqual(app.textFields["sign-up.email"].value as? String, "\(userName)@example.com")
         // Scrolling puts the keyboard away from over the button.
         app.swipeUp()
         XCTAssertTrue(app.scrollTo(submit), "the sign-up button isn't there")

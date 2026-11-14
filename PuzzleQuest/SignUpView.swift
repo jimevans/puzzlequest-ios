@@ -98,16 +98,6 @@ struct SignUpView: View {
                 AccessibilityNotification.Announcement(String(localized: failure.message)).post()
             }
         }
-        // And the first field that's wrong, which gets the keyboard.
-        .onChange(of: model.fieldProblems) { _, problems in
-            guard let first = SignUpField.allCases.first(where: { problems[$0] != nil }) else {
-                return
-            }
-            focus = first
-            if let problem = problems[first] {
-                AccessibilityNotification.Announcement(String(localized: problem.message)).post()
-            }
-        }
     }
 
     /// A field, with what's wrong with it shown beneath; editing it clears
@@ -162,7 +152,22 @@ struct SignUpView: View {
 
     private func signUp() {
         focus = nil
-        Task { await model.signUp() }
+        Task {
+            await model.signUp()
+            showFirstProblem()
+        }
+    }
+
+    /// After trying to sign up, the first field that's wrong gets the
+    /// keyboard, and VoiceOver reads out what's wrong with it. Only then:
+    /// editing a field clears its problem, and moving the keyboard on as the
+    /// player types would take it from the field they're fixing.
+    private func showFirstProblem() {
+        guard let first = SignUpField.allCases.first(where: { model.fieldProblems[$0] != nil }),
+            let problem = model.fieldProblems[first]
+        else { return }
+        focus = first
+        AccessibilityNotification.Announcement(String(localized: problem.message)).post()
     }
 }
 

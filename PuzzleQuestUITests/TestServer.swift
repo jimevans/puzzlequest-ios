@@ -309,6 +309,17 @@ extension XCUIApplication {
         XCTAssertFalse(notNow.exists, "the offer didn't go away")
     }
 
+    /// Closes iOS's offer of a strong password, if it makes one: a field for a
+    /// new password brings it up, over the keyboard, so typing goes nowhere.
+    /// Call it once the field has been tapped.
+    @MainActor
+    func dismissStrongPasswordOffer() {
+        let close = buttons["xmark"]
+        guard close.waitForExistence(timeout: 3) else { return }
+        close.tapWhenHittable()
+        XCTAssertTrue(close.waitForNonExistence(timeout: 5), "the strong password offer didn't go away")
+    }
+
     /// Signs out through the home screen's account menu.
     @MainActor
     func signOutFromHome() {
