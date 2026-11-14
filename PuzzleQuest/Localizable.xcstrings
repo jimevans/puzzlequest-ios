@@ -53,6 +53,9 @@
     "A server's address starts with https:// (or http:// for a test server)." : {
       "comment" : "Options (debug builds): a custom server's address was refused because it isn't a web address."
     },
+    "About PuzzleQuest" : {
+      "comment" : "Options: heads the links to the server's privacy policy and support page."
+    },
     "Account" : {
       "comment" : "The home screen's menu button, holding Options and Sign out."
     },
@@ -319,7 +322,7 @@
       "comment" : "Reminder on the home screen until the player verifies their email address."
     },
     "Privacy Policy" : {
-      "comment" : "Sign-up screen, after the text message consent: opens the website's privacy policy."
+      "comment" : "Opens the server's privacy policy, on its website: in Options, and after the text message consent on the sign-up screen."
     },
     "Production" : {
       "comment" : "Options: the choice of PuzzleQuest's own server, thepuzzlequest.com."
@@ -460,6 +463,9 @@
     },
     "Stop not available" : {
       "comment" : "When a stop's details are open but the stop has gone, as after the quest is reset."
+    },
+    "Support" : {
+      "comment" : "Options: opens the server's support page, on its website."
     },
     "Switch and sign out" : {
       "comment" : "Options: confirms switching servers, which signs the person out."

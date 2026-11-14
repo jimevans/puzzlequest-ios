@@ -65,8 +65,11 @@ struct ServerOriginTests {
         #expect(try ServerOrigin(parsing: typed).displayName == name)
     }
 
-    @Test("Its privacy policy is on its website")
-    func privacyPolicy() throws {
+    @Test("Its privacy policy and support page are on its website")
+    func policies() throws {
+        #expect(
+            ServerOrigin.production.support.absoluteString
+                == "https://thepuzzlequest.com/policies/support.html")
         #expect(
             ServerOrigin.production.privacyPolicy.absoluteString
                 == "https://thepuzzlequest.com/policies/privacy.html")

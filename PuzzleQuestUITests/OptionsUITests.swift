@@ -35,6 +35,9 @@ final class OptionsUITests: XCTestCase {
         XCTAssertTrue(app.element("options.server.production").isSelected, "Production isn't chosen")
         XCTAssertFalse(app.element("options.server.custom").isSelected)
         XCTAssertTrue(app.element("options.server.this-mac").exists, "a debug build offers This Mac")
+        // The privacy policy and support are always within reach.
+        XCTAssertTrue(app.scrollTo(app.element("options.privacy")), "there's no privacy policy link")
+        XCTAssertTrue(app.element("options.support").exists, "there's no support link")
 
         app.element("options.done").tap()
         XCTAssertTrue(
