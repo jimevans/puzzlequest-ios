@@ -15,8 +15,11 @@ played, the stops solved, and the finish and a race's standings; the stop
 being played opens to its puzzle, where the player activates it (scanning its
 QR code, or typing its code), reads it, reveals hints, and answers, then goes
 on to the next stop. Staff and administrators, whose tools
-are on the website, are told so. Signing up and the rest of an account's
-pages are on the website for now; the sign-in screen links there. Options,
+are on the website, are told so. New players sign up from the sign-in screen
+(with the same fields and text-message consent as the website) and are signed
+straight in; anyone can delete their account from the account menu (or, for
+staff and administrators, their screen), confirming with their password. The
+rest of an account's pages are on the website for now. Options,
 from the sign-in screen or the account menu, chooses which PuzzleQuest server
 the app uses (below).
 
@@ -280,7 +283,10 @@ cd PuzzleQuestKit && swift test --filter ContractTests
 ```
 
 They sign in, check the session, sign out, and check the problems the server
-sends for a wrong password, an invalid request, and too many attempts; fetch
+sends for a wrong password, an invalid request, and too many attempts; sign
+up a new player and be signed in as them, have a user name and an email
+address already in use refused in the server's words, and delete an account
+(a wrong password refused first) so it no longer signs in; fetch
 a new player's quests before and after a quest is made and started for them;
 get live tickets; follow the player's quests over the real websocket and hear
 of a quest starting; fetch a quest as its player before and after it starts,
@@ -314,7 +320,10 @@ xcodebuild test -project PuzzleQuest.xcodeproj -scheme PuzzleQuest \
 This runs the unit tests and the UI tests (XCUITest), which launch the app
 pointed at the test server, sign in, relaunch to check the session is kept,
 sign out through the account menu, and check a wrong password is explained,
-the link to sign up, and that an administrator is sent to the website. As a
+and that an administrator is sent to the website. They sign up (with what's
+missing first said at its field), see the new player's home with the reminder
+to verify their email address, then delete the account (a wrong password
+first refused) and find it no longer signs in. As a
 new player, they see an empty list, then a quest that the test starts through
 the API appear by itself (a live update), open it, and send the verification
 email again. On the quest screen they see the current stop, and the quest

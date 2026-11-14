@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@" : {
+      "comment" : "Beneath a sign-up field: the server's own words about what's wrong with it."
+    },
     "%@ finished %@." : {
       "comment" : "Spoken by VoiceOver when another team or player in the race finishes: their name, then their place, such as \"1st\".",
       "localizations" : {
@@ -29,6 +32,9 @@
     "%@, paused" : {
       "comment" : "In the race standings: an entry's status, when the puzzle master has paused it."
     },
+    "%@. Choose another, or sign in if the account is yours." : {
+      "comment" : "Sign-up screen, when the user name or email address is taken; the argument is the server's words, such as \"That user name is already in use\"."
+    },
     "A challenge from the puzzle master" : {
       "comment" : "Quest screen: heading of the puzzle master's challenge, above its question and the answer field."
     },
@@ -47,6 +53,9 @@
     "A server's address starts with https:// (or http:// for a test server)." : {
       "comment" : "Options (debug builds): a custom server's address was refused because it isn't a web address."
     },
+    "About PuzzleQuest" : {
+      "comment" : "Options: heads the links to the server's privacy policy and support page."
+    },
     "Account" : {
       "comment" : "The home screen's menu button, holding Options and Sign out."
     },
@@ -55,6 +64,9 @@
     },
     "Activation code" : {
       "comment" : "Puzzle screen: the label of the field for the code that starts a puzzle the players have found."
+    },
+    "Allow sending of SMS messages" : {
+      "comment" : "Sign-up screen: the switch agreeing to text messages, as the website words it."
     },
     "Another PuzzleQuest server" : {
       "comment" : "Options: describes the Custom server choice."
@@ -67,6 +79,9 @@
     },
     "Answered by text at %@" : {
       "comment" : "Quest screen, on the confirmation of an answered challenge: when it was answered by text message; the argument is a time."
+    },
+    "At least %lld characters." : {
+      "comment" : "Sign-up screen, under the password fields: the shortest password allowed."
     },
     "Back to the quest" : {
       "comment" : "Puzzle screen: button that returns to the quest screen."
@@ -110,6 +125,12 @@
     "Checking the server" : {
       "comment" : "Options: VoiceOver label for the spinner shown while the app checks a custom server is PuzzleQuest's."
     },
+    "Checking this box gives The PuzzleQuest Game consent to send you mobile text (SMS) messages. These messages will come from The PuzzleQuest Game number (813-296-5411). The PuzzleQuest Game does not charge for these services, but messaging and data rates from your mobile provider may apply. You may opt out of receiving the messages at any time by replying \"STOP\", or by unchecking this checkbox. See our Privacy Policy for full details." : {
+      "comment" : "Sign-up screen: the consent to text messages, word for word as the website and the SMS provider have it. Translate only with the provider's approved wording."
+    },
+    "Confirm password" : {
+      "comment" : "Sign-up screen: the password typed a second time."
+    },
     "Congratulations! You finished %@ in %@." : {
       "comment" : "When the player finishes a quest: the quest's name, then their total time.",
       "localizations" : {
@@ -142,8 +163,23 @@
     "Custom server" : {
       "comment" : "Options: heading of the section where a custom server's address is typed."
     },
+    "Delete account" : {
+      "comment" : "In the home screen's account menu, and on the staff and administrators' screen: opens the screen for deleting the account."
+    },
+    "Delete my account" : {
+      "comment" : "The button that deletes the account, once the password is typed."
+    },
+    "Delete your account?" : {
+      "comment" : "Title of the screen for deleting the account."
+    },
+    "Display name" : {
+      "comment" : "Sign-up screen: the name other players and the puzzle master see."
+    },
     "Done" : {
       "comment" : "Closes the Options screen, and the sheet of the puzzle master's messages on the quest screen."
+    },
+    "Email" : {
+      "comment" : "Sign-up screen: the email address field."
     },
     "End of the line" : {
       "comment" : "Heading when the player has finished the quest (the quest's journey is over)."
@@ -213,6 +249,9 @@
     "It's a race: the standings will show here once your team finishes." : {
       "comment" : "Under the race standings while the player's team is still racing."
     },
+    "Keep my account" : {
+      "comment" : "Closes the screen for deleting the account without deleting it."
+    },
     "Keep trying" : {
       "comment" : "Puzzle screen: alert button that declines to reveal the hint giving the solution away."
     },
@@ -225,8 +264,8 @@
     "Loading your quests…" : {
       "comment" : "Shown while the home screen fetches the player's quests."
     },
-    "New to PuzzleQuest? Sign up on the website" : {
-      "comment" : "Link on the sign-in screen that opens the website, where people sign up."
+    "New to PuzzleQuest? Sign up" : {
+      "comment" : "Link on the sign-in screen to the sign-up screen."
     },
     "Not now" : {
       "comment" : "Quest screen, on the card offering notifications: stops offering them on this quest."
@@ -273,11 +312,17 @@
     "Paused by the puzzle master. The clock is stopped." : {
       "comment" : "Spoken by VoiceOver when the puzzle master pauses the quest."
     },
+    "Phone number (optional)" : {
+      "comment" : "Sign-up screen: the phone number field, which may be left empty."
+    },
     "Picture" : {
       "comment" : "Puzzle screen: VoiceOver's name for a picture in a puzzle that has no description."
     },
     "Please verify your email address: follow the link in the email we sent you." : {
       "comment" : "Reminder on the home screen until the player verifies their email address."
+    },
+    "Privacy Policy" : {
+      "comment" : "Opens the server's privacy policy, on its website: in Options, and after the text message consent on the sign-up screen."
     },
     "Production" : {
       "comment" : "Options: the choice of PuzzleQuest's own server, thepuzzlequest.com."
@@ -302,6 +347,9 @@
     },
     "Quest not available" : {
       "comment" : "Heading when the player can no longer see a quest, as after the puzzle master resets it."
+    },
+    "Required." : {
+      "comment" : "Beneath a sign-up field left empty."
     },
     "Reveal next hint" : {
       "comment" : "Puzzle screen: button that reveals the next hint, which costs no time."
@@ -347,6 +395,9 @@
     },
     "Sign out" : {
       "comment" : "Ends the session: in the home screen's account menu, and on the staff and administrators' screen."
+    },
+    "Sign up" : {
+      "comment" : "Title of the sign-up screen, and its button."
     },
     "Signed in as %@" : {
       "comment" : "Heads the home screen's account menu; the argument is the user's display name."
@@ -413,6 +464,9 @@
     "Stop not available" : {
       "comment" : "When a stop's details are open but the stop has gone, as after the quest is reset."
     },
+    "Support" : {
+      "comment" : "Options: opens the server's support page, on its website."
+    },
     "Switch and sign out" : {
       "comment" : "Options: confirms switching servers, which signs the person out."
     },
@@ -430,6 +484,9 @@
     },
     "That isn't this puzzle's code. Check it and try again." : {
       "comment" : "Puzzle screen: the activation code typed or scanned was wrong."
+    },
+    "That isn't your password. Check it and try again." : {
+      "comment" : "Screen for deleting the account, when the password typed is wrong."
     },
     "That server runs a version of PuzzleQuest this app can't use." : {
       "comment" : "Options: the custom server is PuzzleQuest's, but its API's version isn't 1."
@@ -458,6 +515,9 @@
     "The next hint shows you the solution." : {
       "comment" : "Puzzle screen: message of the alert asking before revealing a hint that gives the solution away."
     },
+    "The passwords don't match." : {
+      "comment" : "Sign-up screen, beneath the second password when the two differ."
+    },
     "The puzzle is started." : {
       "comment" : "VoiceOver announcement when the puzzle on screen is activated."
     },
@@ -478,6 +538,9 @@
     },
     "This Mac" : {
       "comment" : "Options (debug builds only): the choice of a server running on the developer's Mac, localhost:3000."
+    },
+    "This account can't be deleted now. Ask PuzzleQuest for help." : {
+      "comment" : "Screen for deleting the account, when the server won't delete it, as for the only administrator."
     },
     "This app connects only to PuzzleQuest's own servers: thepuzzlequest.com and addresses ending in .thepuzzlequest.com." : {
       "comment" : "Options (release builds): explains which custom servers can be used, and why one was refused."
@@ -509,6 +572,12 @@
     "Too many attempts to sign in. Wait a few minutes, then try again." : {
       "comment" : "Sign-in error: rate limited after repeated failures."
     },
+    "Too many attempts to sign up. Wait a few minutes, then try again." : {
+      "comment" : "Sign-up screen, after too many tries in a short time."
+    },
+    "Too many attempts. Wait a few minutes, then try again." : {
+      "comment" : "Screen for deleting the account, after too many wrong passwords."
+    },
     "Total" : {
       "comment" : "In a stop's times: the time spent on it plus hint penalties."
     },
@@ -524,6 +593,12 @@
     "Type your answer first." : {
       "comment" : "Quest screen: shown under the challenge's answer field when the player sends nothing."
     },
+    "US and Canadian numbers only, for now." : {
+      "comment" : "Sign-up screen, under the phone number."
+    },
+    "Use at least %lld characters." : {
+      "comment" : "Sign-up screen, beneath a password that's too short; the argument is the shortest allowed."
+    },
     "Use this server" : {
       "comment" : "Options: button that checks and switches to the typed custom server."
     },
@@ -532,6 +607,9 @@
     },
     "We couldn't use your camera, so enter this puzzle's code to begin." : {
       "comment" : "Puzzle screen: shown when the camera can't scan, asking for the code to be typed."
+    },
+    "We'll send you an email to check it's yours." : {
+      "comment" : "Sign-up screen, under the email address."
     },
     "Winner" : {
       "comment" : "Badge in the final standings on the team or player who won."
@@ -548,8 +626,17 @@
     "You've found this puzzle's place. Point your camera at its QR code." : {
       "comment" : "Puzzle screen: asks the players to scan the QR code found at the puzzle's place."
     },
+    "Your account goes, with your details, and you'll leave your teams. Your name comes out of quests' activity logs. A quest you were playing on your own stays, for the puzzle master. This can't be undone." : {
+      "comment" : "Screen for deleting the account: what deleting does, as the website says it."
+    },
+    "Your account is made, but signing in failed. Go back and sign in with it." : {
+      "comment" : "Sign-up screen, when the account was made but signing in with it then failed."
+    },
     "Your answer" : {
       "comment" : "Puzzle screen: the label of the field for the player's guess at the solution."
+    },
+    "Your password, to confirm" : {
+      "comment" : "Screen for deleting the account: heads the password field."
     },
     "Your quests" : {
       "comment" : "Title of a player's home screen, which lists their quests."

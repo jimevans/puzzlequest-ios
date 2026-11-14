@@ -9,6 +9,7 @@ struct WebsiteNoteView: View {
     @Environment(SessionStore.self) private var session
     @State private var isSigningOut = false
     @State private var showingOptions = false
+    @State private var deletingAccount = false
 
     private var website: URL { connection.server.url }
 
@@ -33,6 +34,8 @@ struct WebsiteNoteView: View {
                 }
                 .disabled(isSigningOut)
                 .accessibilityIdentifier("website.sign-out")
+                Button("Delete account", role: .destructive) { deletingAccount = true }
+                    .accessibilityIdentifier("website.delete-account")
             }
             .navigationTitle("PuzzleQuest")
             .toolbar {
@@ -43,6 +46,9 @@ struct WebsiteNoteView: View {
             }
             .sheet(isPresented: $showingOptions) {
                 OptionsView(connection: connection)
+            }
+            .sheet(isPresented: $deletingAccount) {
+                DeleteAccountView(session: session)
             }
         }
     }

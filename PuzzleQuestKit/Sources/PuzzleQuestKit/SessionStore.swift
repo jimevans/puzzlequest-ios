@@ -71,6 +71,15 @@ public final class SessionStore {
         state = .signedIn(user)
     }
 
+    /// Deletes the signed-in user's own account, with their password. The
+    /// server ends its sessions, so it's forgotten here too.
+    public func deleteAccount(password: String) async throws(APIError) {
+        guard case .signedIn(let user) = state else { return }
+        try await api.deleteAccount(userName: user.userName, password: password)
+        tokens.delete()
+        state = .signedOut
+    }
+
     /// Ends the session on the server, then forgets it here, even if the
     /// server couldn't be told.
     public func signOut() async {

@@ -75,6 +75,37 @@ public struct APIClient: Sendable {
         }
     }
 
+    /// Signs up a new player. The server sends the address an email to verify
+    /// it; the new player then signs in as anyone does.
+    public func signUp(_ details: NewAccount) async throws(APIError) {
+        let output = try await call {
+            try await client.createUser(
+                body: .json(
+                    .init(
+                        userName: details.userName,
+                        displayName: details.displayName,
+                        email: details.email,
+                        phone: details.phone,
+                        sms: details.sms,
+                        password: details.password)))
+        }
+        guard case .created = output else {
+            throw .unexpectedResponse("createUser: \(output)")
+        }
+    }
+
+    /// Deletes the user's own account, with their password, ending its
+    /// sessions.
+    public func deleteAccount(userName: String, password: String) async throws(APIError) {
+        let output = try await call {
+            try await client.deleteUser(
+                path: .init(userName: userName), body: .json(.init(password: password)))
+        }
+        guard case .noContent = output else {
+            throw .unexpectedResponse("deleteUser: \(output)")
+        }
+    }
+
     /// Every quest the user plays whose entry has started, fetching each page
     /// of the list in turn.
     public func userQuests(userName: String) async throws(APIError) -> [QuestSummary] {

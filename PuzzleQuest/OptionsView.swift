@@ -52,6 +52,14 @@ struct OptionsView: View {
                 if model.choice == .custom {
                     customServer
                 }
+                // The policies of the server in use, on its website: App
+                // Store review asks that the privacy policy be easy to find.
+                Section("About PuzzleQuest") {
+                    Link("Privacy Policy", destination: connection.server.privacyPolicy)
+                        .accessibilityIdentifier("options.privacy")
+                    Link("Support", destination: connection.server.support)
+                        .accessibilityIdentifier("options.support")
+                }
             }
             .navigationTitle("Options")
             .navigationBarTitleDisplayMode(.inline)

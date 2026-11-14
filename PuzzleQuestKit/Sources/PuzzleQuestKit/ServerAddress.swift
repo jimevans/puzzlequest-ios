@@ -34,6 +34,16 @@ public struct ServerOrigin: Hashable, Sendable {
         return url.port.map { "\(host):\($0)" } ?? host
     }
 
+    /// The server's privacy policy, on its website.
+    public var privacyPolicy: URL {
+        url.appending(path: "policies/privacy.html")
+    }
+
+    /// The server's support page, on its website.
+    public var support: URL {
+        url.appending(path: "policies/support.html")
+    }
+
     /// Reads a server's address as a person types it: a missing scheme is
     /// taken to be `https://`, a final `/` and the scheme's usual port are
     /// dropped, and the scheme and host are put in lower case. Anything but
