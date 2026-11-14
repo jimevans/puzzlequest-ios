@@ -371,6 +371,28 @@ test server, the contract tests, and the unit and UI tests in the simulator.
 When a run fails, its test results (`Tests.xcresult`) and the server's logs
 are kept as an artifact.
 
+## Releasing
+
+The version people see is `MARKETING_VERSION` (1.0.0 for the first release)
+and each upload to App Store Connect needs a higher build number,
+`CURRENT_PROJECT_VERSION`; both are build settings of the app target. What
+App Store review checks that lives here:
+
+- `PuzzleQuest/PrivacyInfo.xcprivacy`, the privacy manifest: no tracking; the
+  account's name, email address, phone number and user ID, the push
+  notification token, and answers, all linked to the player and used only for
+  the app itself; and the one required-reason API used, UserDefaults (reason
+  CA92.1, the app's own settings). Keep it in step with the App Privacy
+  answers in App Store Connect, and add any new required-reason API.
+- `ITSAppUsesNonExemptEncryption` is `NO`: the app's only encryption is
+  HTTPS, through Apple's own networking, so no export compliance documents
+  are needed and App Store Connect doesn't ask each upload.
+- Accounts can be made in the app, so they can be deleted in it (the account
+  menu's Delete account), as App Store review requires.
+- Archives signed for distribution get `aps-environment` set to production,
+  so the server needs the Production push notification key
+  (`PQ_APNS_KEY_FILE` and `PQ_APNS_KEY_ID` in the server's settings).
+
 ## Copyright
 
 Copyright © 2026 jimevans. All rights reserved. The source is public so it can
