@@ -64,6 +64,16 @@ struct ServerOriginTests {
     func displayName(typed: String, name: String) throws {
         #expect(try ServerOrigin(parsing: typed).displayName == name)
     }
+
+    @Test("Its privacy policy is on its website")
+    func privacyPolicy() throws {
+        #expect(
+            ServerOrigin.production.privacyPolicy.absoluteString
+                == "https://thepuzzlequest.com/policies/privacy.html")
+        #expect(
+            try ServerOrigin(parsing: "http://localhost:3000").privacyPolicy.absoluteString
+                == "http://localhost:3000/policies/privacy.html")
+    }
 }
 
 @Suite("Which servers a build may use")

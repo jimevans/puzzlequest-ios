@@ -19,12 +19,32 @@ public struct Problem: Equatable, Sendable {
     public var status: Int
     public var title: String
     public var detail: String?
+    /// What's wrong with each part of the request, where the server says, as
+    /// for an invalid request or a user name already in use.
+    public var errors: [FieldError]
 
-    public init(type: String, status: Int, title: String, detail: String? = nil) {
+    public init(
+        type: String, status: Int, title: String, detail: String? = nil,
+        errors: [FieldError] = []
+    ) {
         self.type = type
         self.status = status
         self.title = title
         self.detail = detail
+        self.errors = errors
+    }
+}
+
+/// What the server says is wrong with one part of a request.
+public struct FieldError: Equatable, Sendable {
+    /// Where it is, such as `body.email`.
+    public var path: String
+    /// What's wrong, in the server's words, which are meant for people.
+    public var message: String
+
+    public init(path: String, message: String) {
+        self.path = path
+        self.message = message
     }
 }
 
@@ -43,6 +63,9 @@ extension Problem {
         public static let wrongActivationCode = "/problems/wrong-activation-code"
         public static let wrongAnswer = "/problems/wrong-answer"
         public static let noMoreHints = "/problems/no-more-hints"
+        public static let alreadyExists = "/problems/already-exists"
+        public static let passwordNotAllowed = "/problems/password-not-allowed"
+        public static let incorrectPassword = "/problems/incorrect-password"
     }
 }
 

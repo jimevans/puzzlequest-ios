@@ -55,7 +55,11 @@ struct ProblemMiddleware: ClientMiddleware {
             type: details.type ?? plain.type,
             status: details.status ?? plain.status,
             title: details.title ?? plain.title,
-            detail: details.detail)
+            detail: details.detail,
+            errors: (details.errors ?? []).compactMap { error in
+                guard let path = error.path, let message = error.message else { return nil }
+                return FieldError(path: path, message: message)
+            })
     }
 
     /// Problem details, read leniently: any member may be missing, since
@@ -65,5 +69,11 @@ struct ProblemMiddleware: ClientMiddleware {
         var status: Int?
         var title: String?
         var detail: String?
+        var errors: [Error]?
+
+        struct Error: Decodable {
+            var path: String?
+            var message: String?
+        }
     }
 }

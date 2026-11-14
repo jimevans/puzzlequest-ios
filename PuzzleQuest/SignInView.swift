@@ -5,6 +5,7 @@ import SwiftUI
 /// Production.
 struct SignInView: View {
     @Environment(ServerConnection.self) private var connection
+    @Environment(SessionStore.self) private var session
     @State private var model: SignInModel
     @State private var showingOptions = false
     @FocusState private var focus: Field?
@@ -72,10 +73,11 @@ struct SignInView: View {
                     .disabled(!model.canSignIn)
                     .accessibilityIdentifier("sign-in.submit")
                 }
-                // Signing up is on the website until the app has it.
                 Section {
-                    Link(destination: connection.server.url) {
-                        Text("New to PuzzleQuest? Sign up on the website")
+                    NavigationLink {
+                        SignUpView(session: session)
+                    } label: {
+                        Text("New to PuzzleQuest? Sign up")
                     }
                     .accessibilityIdentifier("sign-in.sign-up")
                 }
@@ -144,4 +146,5 @@ extension SignInFailure {
         vault: InMemoryTokenVault(), policy: .anyAddress, fixed: .thisMac)
     SignInView(session: connection.session)
         .environment(connection)
+        .environment(connection.session)
 }

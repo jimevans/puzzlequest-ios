@@ -16,6 +16,7 @@ struct HomeView: View {
     @State private var path = NavigationPath()
     @State private var isSigningOut = false
     @State private var showingOptions = false
+    @State private var deletingAccount = false
     /// Whether the app has been in the background since it was last active.
     @State private var wasInBackground = false
 
@@ -50,6 +51,9 @@ struct HomeView: View {
             .refreshable { await refresh() }
             .sheet(isPresented: $showingOptions) {
                 OptionsView(connection: connection)
+            }
+            .sheet(isPresented: $deletingAccount) {
+                DeleteAccountView(session: session)
             }
             #if DEBUG
                 .overlay(alignment: .topLeading) { liveUpdatesMarker }
@@ -162,6 +166,9 @@ struct HomeView: View {
                 }
             }
             Button("Options", systemImage: "gearshape") { showingOptions = true }
+            Button("Delete account", systemImage: "person.crop.circle.badge.xmark", role: .destructive) {
+                deletingAccount = true
+            }
         } label: {
             Label("Account", systemImage: "person.crop.circle")
         }
